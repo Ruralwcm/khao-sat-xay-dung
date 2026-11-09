@@ -254,6 +254,7 @@ $('selQlkv').onchange = function() {
     const o = document.createElement('option');
     o.value = c.ma; o.textContent = c.ma + ' — ' + (c.ten || '').substring(0, 40);
     o.dataset.ten = c.ten || ''; o.dataset.tinh = c.tinh || '';
+    o.dataset.huyen = c.huyen || ''; o.dataset.ngaykt = c.ngayKt || '';
     o.dataset.diachi = c.diaChi || ''; o.dataset.qlkv = c.qlkv || '';
     $('selCh').appendChild(o);
   });
@@ -263,9 +264,10 @@ $('selCh').onchange = function() {
   if (!this.value) { resetStoreSelect(); return; }
   const opt = this.selectedOptions[0];
   selectedStore = { ma: this.value, ten: opt.dataset.ten, tinh: opt.dataset.tinh, 
+                    huyen: opt.dataset.huyen, ngayKt: opt.dataset.ngaykt,
                     diaChi: opt.dataset.diachi, qlkv: opt.dataset.qlkv };
-  $('vLine1').textContent = '📍 ' + esc(selectedStore.ten);
-  $('vLine2').textContent = '🏙️ ' + esc(selectedStore.tinh) + (selectedStore.diaChi ? ' — ' + esc(selectedStore.diaChi) : '');
+  $('vLine1').textContent = esc(selectedStore.ma) + ' — ' + esc(selectedStore.ten);
+  $('vLine2').textContent = '📅 KT: ' + esc(selectedStore.ngayKt || '—') + ' | 🏙️ ' + esc(selectedStore.tinh) + (selectedStore.huyen ? ' — ' + esc(selectedStore.huyen) : '');
   loadUnsurveyed();
   updateBtn();
 };
