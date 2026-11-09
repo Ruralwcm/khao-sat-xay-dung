@@ -4,283 +4,389 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Khảo sát Vấn đề Xây dựng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy: #0A2240; --steel: #1F4E79; --red: #C00000;
-    --paper: #FFF; --band: #F3F5F8; --rule: #CBD3DD;
-    --ink: #1A1F26; --ink2: #4A5260; --green: #1B7A4A;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
-    background: #E9ECF0; color: var(--ink);
-    font-size: 15px; line-height: 1.5;
-    min-height: 100vh;
-  }
-  .page { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
-
-  .hero {
-    background: linear-gradient(135deg, var(--navy), var(--steel));
-    color: #fff; padding: 28px 24px; border-radius: 10px 10px 0 0;
-    margin-top: 24px;
-  }
-  .hero h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .hero p { font-size: 14px; opacity: 0.85; }
-
-  .card {
-    background: var(--paper); border: 1px solid var(--rule);
-    border-top: 0; border-radius: 0 0 10px 10px;
-    padding: 24px;
-  }
-
-  .store-info {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 14px; padding: 16px; background: var(--band);
-    border-radius: 8px; margin-bottom: 20px;
-  }
-  .store-info .full { grid-column: 1 / -1; }
-
-  label {
-    display: block; font-size: 13px; font-weight: 600;
-    color: var(--steel); margin-bottom: 4px;
-  }
-  input, select, textarea {
-    width: 100%; padding: 9px 12px; border: 1px solid var(--rule);
-    border-radius: 6px; font: inherit; font-size: 14px;
-    transition: border-color 0.2s;
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none; border-color: var(--steel);
-  }
-
-  .section-title {
-    font-size: 16px; font-weight: 700; color: var(--navy);
-    margin: 24px 0 12px; padding-bottom: 8px;
-    border-bottom: 2px solid var(--navy);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-title .num {
-    background: var(--navy); color: #fff; font-size: 13px;
-    width: 24px; height: 24px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  .issue-row {
-    padding: 14px 16px; border: 1px solid var(--rule);
-    border-radius: 8px; margin-bottom: 10px;
-    background: #FAFBFC;
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .issue-row .issue-name {
-    grid-column: 1 / -1;
-    font-weight: 700; font-size: 14px; color: var(--red);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .issue-row .issue-name::before { content: "⚠"; font-size: 16px; }
-  .issue-row .full { grid-column: 1 / -1; }
-
-  .btn-submit {
-    display: block; width: 100%; padding: 14px;
-    background: var(--red); color: #fff; border: none;
-    border-radius: 8px; font: inherit; font-size: 16px; font-weight: 700;
-    cursor: pointer; margin-top: 24px;
-    transition: background 0.2s, transform 0.1s;
-  }
-  .btn-submit:hover { background: #A00000; }
-  .btn-submit:active { transform: scale(0.98); }
-  .btn-submit:disabled { background: #CBD3DD; cursor: not-allowed; }
-
-  .msg {
-    text-align: center; padding: 12px; border-radius: 8px;
-    margin-top: 12px; display: none; font-weight: 600;
-  }
-  .msg.success { background: #E8F5E9; color: var(--green); display: block; }
-  .msg.error { background: #FFEBEE; color: #B42318; display: block; }
-
-  .note {
-    font-size: 12px; color: var(--ink2); margin-top: 16px;
-    padding: 12px; background: var(--band); border-radius: 6px;
-    border-left: 3px solid var(--steel);
-  }
-
-  @media (max-width: 480px) {
-    .store-info, .issue-row { grid-template-columns: 1fr; }
-    .hero h1 { font-size: 18px; }
-  }
+  :root{ --red:#d71920; --navy:#1a3c6e; --gold:#ffc107; --green:#1e8e4e;
+    --bg:#f4f6fb; --card:#fff; --line:#e5e9f2; --txt:#1c2434; --mut:#6b7280; }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif; background:var(--bg); color:var(--txt);
+    min-height:100vh; padding:10px; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:560px; margin:0 auto}
+  .head{background:linear-gradient(135deg,var(--navy),#2c4a8a); color:#fff; border-radius:14px;
+    padding:14px 16px; box-shadow:0 6px 18px rgba(26,60,110,.16)}
+  .head h1{font-size:17px; font-weight:800; line-height:1.3}
+  .head p{font-size:11.5px; opacity:.85; margin-top:4px}
+  .badge{display:inline-block; background:rgba(255,255,255,.16); padding:3px 9px; border-radius:16px;
+    font-size:11px; margin-top:8px}
+  .card{background:var(--card); border-radius:12px; padding:14px; margin-top:10px;
+    box-shadow:0 1px 6px rgba(20,30,60,.04); border:1px solid var(--line)}
+  .card h2{font-size:14px; font-weight:700; color:var(--navy); margin-bottom:10px}
+  label{font-size:11.5px; font-weight:600; color:var(--mut); display:block; margin:8px 0 4px}
+  input,select,textarea{width:100%; font-size:14px; font-family:inherit; padding:10px 12px;
+    border:1.5px solid var(--line); border-radius:10px; background:#fafbfd; color:var(--txt); outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--navy); background:#fff}
+  .cas{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .cas select{width:100%}
+  .cas label{margin:0 0 3px}
+  .st-line{font-size:12.5px; font-weight:600; color:var(--txt); margin:2px 0}
+  .sec{border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:10px; background:#fff}
+  .sec .st{display:flex; align-items:center; gap:10px}
+  .sec .st .name{flex:1; font-size:13.5px; font-weight:700}
+  .radios{display:flex; gap:6px; flex-wrap:wrap}
+  .radios label{margin:0; font-size:12px; font-weight:600; color:#4b5563; cursor:pointer;
+    padding:7px 12px; border:1.5px solid var(--line); border-radius:18px; background:#fff; white-space:nowrap}
+  .radios input{display:none}
+  .radios label:has(input:checked){border-color:var(--green); color:var(--green); background:#e8f5e9}
+  .radios label:has(input.ko):has(input:checked){border-color:var(--red); color:var(--red); background:#ffebee}
+  .detail{display:none; margin-top:8px}
+  .detail.show{display:block}
+  .detail textarea{min-height:60px; font-size:13px}
+  .detail input[type=date]{max-width:180px}
+  .btn{width:100%; margin-top:12px; background:var(--red); color:#fff; border:none; border-radius:11px;
+    padding:13px; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer;
+    box-shadow:0 5px 14px rgba(215,25,32,.28); transition:.15s}
+  .btn:active{transform:scale(.98)} .btn:disabled{opacity:.5; cursor:not-allowed}
+  .toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(80px);
+    background:#166534; color:#fff; padding:11px 20px; border-radius:10px; font-weight:600; font-size:13px;
+    transition:.3s; box-shadow:0 6px 18px rgba(0,0,0,.18); z-index:50}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--red)}
+  .foot{text-align:center; color:var(--mut); font-size:11px; margin-top:16px}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;
+    z-index:999; padding:14px}
+  .modal{background:#fff; border-radius:14px; padding:18px; max-width:380px; width:100%;
+    box-shadow:0 8px 30px rgba(0,0,0,.15)}
+  .modal h3{font-size:15px; font-weight:700; margin-bottom:10px; color:var(--navy)}
+  .modal .row{font-size:13px; padding:4px 0; border-bottom:1px solid var(--line)}
+  .modal .row b{color:var(--navy)}
+  .btn2{padding:9px 16px; border-radius:9px; font-size:13px; font-weight:700; border:none; cursor:pointer; flex:1}
+  .btn2.act{background:var(--red); color:#fff}
+  .btn2.ghost{background:#f4f6fb; color:var(--mut); border:1px solid var(--line)}
+  .warn{display:none; background:var(--red); color:#fff; border-radius:10px; padding:10px 14px;
+    margin-top:8px; font-weight:700; font-size:13px; animation:shake .4s}
+  .warn.show{display:block}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="hero">
+<div class="wrap">
+  <div class="head">
     <h1>🏗️ Khảo sát Vấn đề Xây dựng</h1>
-    <p>Báo cáo các vấn đề hạ tầng, xuống cấp cần sửa chữa tại cửa hàng</p>
+    <p>Báo cáo hư hỏng hạ tầng cần sửa chữa tại cửa hàng</p>
+    <span class="badge">5 hạng mục</span>
   </div>
 
   <div class="card">
-    <div class="store-info">
-      <div class="full">
-        <label>Mã CH (Mã SAP) <span style="color:#C00000">*</span></label>
-        <input type="text" id="ma_ch" placeholder="VD: 2797" required>
+    <h2>1️⃣ Chọn cửa hàng</h2>
+    <div class="cas">
+      <div><label>Miền</label><select id="selMien"><option value="">— Miền —</option></select></div>
+      <div><label>Vùng (GĐV)</label><select id="selVung"><option value="">— Vùng —</option></select></div>
+      <div><label>QLKV</label><select id="selQlkv"><option value="">— QLKV —</option></select></div>
+      <div><label>Cửa hàng</label><select id="selCh"><option value="">— CH —</option></select></div>
+    </div>
+    <div style="margin-top:8px">
+      <div class="st-line" id="vLine1">—</div>
+      <div class="st-line" id="vLine2">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2️⃣ Người báo cáo</h2>
+    <div class="cas">
+      <div><label>Họ tên</label><input type="text" id="nguoi_bao" placeholder="Người báo cáo"></div>
+      <div><label>Ngày</label><input type="date" id="ngay_bao"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3️⃣ Nội dung khảo sát</h2>
+    <div id="issues">
+      <div class="sec">
+        <div class="st"><span class="name">🧱 Hỏng vỉa hè</span>
+          <div class="radios">
+            <label><input type="radio" name="vh" value="khong" checked onchange="toggleDetail(this)">Không</label>
+            <label><input type="radio" name="vh" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
+          </div>
+        </div>
+        <div class="detail" id="det_vh">
+          <label>Diễn giải</label>
+          <textarea id="dg_vh" placeholder="Mô tả tình trạng hư hỏng..."></textarea>
+          <label>Thời gian hỏng</label>
+          <input type="date" id="tg_vh">
+        </div>
       </div>
-      <div class="full">
-        <label>Tên cửa hàng <span style="color:#C00000">*</span></label>
-        <input type="text" id="ten_ch" placeholder="Tên cửa hàng" required>
+      <div class="sec">
+        <div class="st"><span class="name">🏠 Dột mái</span>
+          <div class="radios">
+            <label><input type="radio" name="dm" value="khong" checked onchange="toggleDetail(this)">Không</label>
+            <label><input type="radio" name="dm" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
+          </div>
+        </div>
+        <div class="detail" id="det_dm">
+          <label>Diễn giải</label>
+          <textarea id="dg_dm" placeholder="Vị trí dột, mức độ ảnh hưởng..."></textarea>
+          <label>Thời gian hỏng</label>
+          <input type="date" id="tg_dm">
+        </div>
       </div>
-      <div>
-        <label>Người báo cáo <span style="color:#C00000">*</span></label>
-        <input type="text" id="nguoi_bao" placeholder="Họ tên" required>
+      <div class="sec">
+        <div class="st"><span class="name">🎨 Tróc sơn tường</span>
+          <div class="radios">
+            <label><input type="radio" name="ts" value="khong" checked onchange="toggleDetail(this)">Không</label>
+            <label><input type="radio" name="ts" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
+          </div>
+        </div>
+        <div class="detail" id="det_ts">
+          <label>Diễn giải</label>
+          <textarea id="dg_ts" placeholder="Vị trí, diện tích ước tính..."></textarea>
+          <label>Thời gian hỏng</label>
+          <input type="date" id="tg_ts">
+        </div>
       </div>
-      <div>
-        <label>Ngày báo cáo</label>
-        <input type="date" id="ngay_bao" required>
+      <div class="sec">
+        <div class="st"><span class="name">💧 Hỏng đường thoát nước</span>
+          <div class="radios">
+            <label><input type="radio" name="tn" value="khong" checked onchange="toggleDetail(this)">Không</label>
+            <label><input type="radio" name="tn" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
+          </div>
+        </div>
+        <div class="detail" id="det_tn">
+          <label>Diễn giải</label>
+          <textarea id="dg_tn" placeholder="Vị trí tắc/hỏng, mức độ..."></textarea>
+          <label>Thời gian hỏng</label>
+          <input type="date" id="tg_tn">
+        </div>
+      </div>
+      <div class="sec">
+        <div class="st"><span class="name">🚽 Hỏng nhà vệ sinh</span>
+          <div class="radios">
+            <label><input type="radio" name="wc" value="khong" checked onchange="toggleDetail(this)">Không</label>
+            <label><input type="radio" name="wc" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
+          </div>
+        </div>
+        <div class="detail" id="det_wc">
+          <label>Diễn giải</label>
+          <textarea id="dg_wc" placeholder="Bồn cầu, lavabo, đường ống..."></textarea>
+          <label>Thời gian hỏng</label>
+          <input type="date" id="tg_wc">
+        </div>
       </div>
     </div>
+  </div>
 
-    <div class="section-title"><span class="num">1</span> Vấn đề xây dựng</div>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">
-      Chọn "Có" nếu có vấn đề và điền Diễn giải + Thời gian hỏng. Chọn "Không" nếu không có.
-    </p>
+  <div class="warn" id="warnBox"></div>
+  <button class="btn" id="btnSubmit" disabled>📤 Gửi kết quả</button>
+  <div class="foot">MsT ✨ — Rural Survey</div>
+</div>
 
-    <div id="issues-container">
-    </div>
+<div class="toast" id="toast"></div>
 
-    <button class="btn-submit" onclick="submitForm()">📤 Gửi báo cáo</button>
-    <div class="msg" id="msg"></div>
-
-    <div class="note">
-      📌 <b>Hướng dẫn:</b> Kiểm tra từng hạng mục. Vấn đề nào <b>có</b> → chọn "Có" + mô tả chi tiết + thời gian bắt đầu hỏng.
+<div class="overlay" id="confirmOverlay" style="display:none">
+  <div class="modal">
+    <h3>📋 Xác nhận kết quả</h3>
+    <div id="confirmBody"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn2 ghost" onclick="$('confirmOverlay').style.display='none'">🔙 Quay lại</button>
+      <button class="btn2 act" onclick="doSubmit()">✅ Xác nhận gửi</button>
     </div>
   </div>
 </div>
 
 <script>
-// ─── CONFIG ───
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPmh_Erk9eDbpNCMQePscfl067merQamb1xfvKbtjyUmjw3jTUU4Z43LzziuQb7H1X/exec';
-const TABLE = 'xay_dung';
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+let STORES = [], selectedStore = null;
 const ISSUES = [
-  {name: 'Hỏng vỉa hè', icon: '🧱'},
-  {name: 'Dột mái', icon: '🏠'},
-  {name: 'Tróc sơn tường', icon: '🎨'},
-  {name: 'Hỏng đường thoát nước', icon: '💧'},
-  {name: 'Hỏng nhà vệ sinh', icon: '🚽'}
+  {key:'vh', name:'Hỏng vỉa hè', icon:'🧱'},
+  {key:'dm', name:'Dột mái', icon:'🏠'},
+  {key:'ts', name:'Tróc sơn tường', icon:'🎨'},
+  {key:'tn', name:'Hỏng đường thoát nước', icon:'💧'},
+  {key:'wc', name:'Hỏng nhà vệ sinh', icon:'🚽'}
 ];
 
-// ─── INIT ───
-document.getElementById('ngay_bao').value = new Date().toISOString().split('T')[0];
+function toggleDetail(radio) {
+  const sec = radio.closest('.sec');
+  const detail = sec.querySelector('.detail');
+  if (radio.value === 'co') detail.classList.add('show');
+  else detail.classList.remove('show');
+}
 
-const container = document.getElementById('issues-container');
-ISSUES.forEach((iss, i) => {
-  container.insertAdjacentHTML('beforeend', `
-    <div class="issue-row">
-      <div class="issue-name">${iss.icon} ${iss.name}</div>
-      <div>
-        <label>Có vấn đề?</label>
-        <select class="has-issue" data-idx="${i}">
-          <option value="khong">Không</option>
-          <option value="co">Có</option>
-        </select>
-      </div>
-      <div class="full">
-        <label>Diễn giải</label>
-        <textarea rows="2" class="dien-giai" data-idx="${i}" placeholder="Mô tả chi tiết tình trạng..."></textarea>
-      </div>
-      <div>
-        <label>Thời gian hỏng</label>
-        <input type="date" class="tg-hong" data-idx="${i}">
-      </div>
-    </div>
-  `);
-});
+function showToast(msg, isErr) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isErr ? ' err' : '') + ' show';
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
 
-// ─── SUBMIT ───
-async function submitForm() {
-  const btn = document.querySelector('.btn-submit');
-  const msg = document.getElementById('msg');
+async function call(data) {
+  const r = await fetch(GAS_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+
+// ─── Store cascade ───
+async function init() {
+  $('ngay_bao').value = new Date().toISOString().split('T')[0];
+  try {
+    const st = await call({action:'getStores', region:''});
+    if (st.ok) { STORES = st.stores || []; }
+    buildMien();
+  } catch(e) { showToast('⚠️ Không kết nối được máy chủ', true); }
+}
+
+function buildMien() {
+  const miens = [...new Set(STORES.map(s => s.mien).filter(Boolean))].sort();
+  const sel = $('selMien');
+  sel.innerHTML = '<option value="">— Miền —</option>';
+  miens.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+}
+
+$('selMien').onchange = function() {
+  $('selVung').innerHTML = '<option value="">— Vùng —</option>';
+  $('selQlkv').innerHTML = '<option value="">— QLKV —</option>';
+  $('selCh').innerHTML = '<option value="">— CH —</option>';
+  selectedStore = null;
+  updateBtn();
+  if (!this.value) return;
+  const gdvs = [...new Set(STORES.filter(s => s.mien === this.value).map(s => s.gdv).filter(Boolean))].sort();
+  gdvs.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; $('selVung').appendChild(o); });
+};
+
+$('selVung').onchange = function() {
+  $('selQlkv').innerHTML = '<option value="">— QLKV —</option>';
+  $('selCh').innerHTML = '<option value="">— CH —</option>';
+  selectedStore = null;
+  updateBtn();
+  if (!this.value) return;
+  const qlkvs = [...new Set(STORES.filter(s => s.gdv === this.value).map(s => s.qlkv).filter(Boolean))].sort();
+  qlkvs.forEach(q => { const o = document.createElement('option'); o.value = q; o.textContent = q; $('selQlkv').appendChild(o); });
+};
+
+$('selQlkv').onchange = function() {
+  $('selCh').innerHTML = '<option value="">— CH —</option>';
+  selectedStore = null;
+  updateBtn();
+  if (!this.value) return;
+  const chs = STORES.filter(s => s.qlkv === this.value && s.gdv === $('selVung').value);
+  chs.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.ma;
+    o.textContent = c.ma + ' — ' + (c.ten || '').substring(0, 40);
+    o.dataset.ten = c.ten || '';
+    o.dataset.tinh = c.tinh || '';
+    o.dataset.diachi = c.diaChi || '';
+    $('selCh').appendChild(o);
+  });
+};
+
+$('selCh').onchange = function() {
+  if (!this.value) { selectedStore = null; updateBtn(); return; }
+  const opt = this.selectedOptions[0];
+  selectedStore = { ma: this.value, ten: opt.dataset.ten, tinh: opt.dataset.tinh, diaChi: opt.dataset.diachi };
+  $('vLine1').textContent = '📍 ' + esc(selectedStore.ten);
+  $('vLine2').textContent = '🏙️ ' + esc(selectedStore.tinh) + (selectedStore.diaChi ? ' — ' + esc(selectedStore.diaChi) : '');
+  updateBtn();
+};
+
+function updateBtn() {
+  $('btnSubmit').disabled = !selectedStore || !$('nguoi_bao').value.trim();
+}
+$('nguoi_bao').oninput = updateBtn;
+
+// ─── Submit flow ───
+$('btnSubmit').onclick = function() {
+  if (!selectedStore) return;
+  // Build confirmation
+  const nguoi = $('nguoi_bao').value.trim();
+  const ngay = $('ngay_bao').value;
+  let html = '<div class="row"><b>CH:</b> ' + esc(selectedStore.ma) + ' — ' + esc(selectedStore.ten) + '</div>';
+  html += '<div class="row"><b>Người báo:</b> ' + esc(nguoi) + ' — <b>Ngày:</b> ' + ngay + '</div>';
+  html += '<div style="margin-top:8px;font-size:13px"><b>Vấn đề:</b></div>';
   
-  const ma_ch = document.getElementById('ma_ch').value.trim();
-  const ten_ch = document.getElementById('ten_ch').value.trim();
-  const nguoi_bao = document.getElementById('nguoi_bao').value.trim();
-  const ngay_bao = document.getElementById('ngay_bao').value;
+  let hasAny = false;
+  ISSUES.forEach(iss => {
+    const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
+    if (radio && radio.value === 'co') {
+      hasAny = true;
+      const dg = $('dg_'+iss.key).value.trim();
+      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc(dg) + '</div>';
+    }
+  });
+  if (!hasAny) html += '<div class="row">✅ Không có vấn đề nào</div>';
+  
+  $('confirmBody').innerHTML = html;
+  $('confirmOverlay').style.display = 'flex';
+};
 
-  if (!ma_ch || !ten_ch || !nguoi_bao || !ngay_bao) {
-    show(msg, 'error', '⚠️ Vui lòng điền đầy đủ Mã CH, Tên CH, Người báo cáo và Ngày');
-    return;
-  }
+async function doSubmit() {
+  $('confirmOverlay').style.display = 'none';
+  const btn = $('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang gửi...';
 
+  const nguoi = $('nguoi_bao').value.trim();
+  const ngay = $('ngay_bao').value;
   const records = [];
-  let hasMissingDesc = false;
-
-  document.querySelectorAll('.issue-row').forEach((row, i) => {
-    const hasIssue = row.querySelector('.has-issue').value;
-    const dienGiai = row.querySelector('.dien-giai').value.trim();
-    const tgHong = row.querySelector('.tg-hong').value;
-
-    if (hasIssue === 'co') {
-      if (!dienGiai) { hasMissingDesc = true; return; }
+  
+  ISSUES.forEach(iss => {
+    const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
+    if (radio && radio.value === 'co') {
       records.push({
-        ma_ch, ten_ch, nguoi_bao, ngay_bao,
-        van_de: ISSUES[i].name,
-        dien_giai: dienGiai,
-        tg_hong: tgHong
+        ma_ch: selectedStore.ma,
+        ten_ch: selectedStore.ten,
+        tinh: selectedStore.tinh,
+        nguoi_bao: nguoi,
+        ngay_bao: ngay,
+        van_de: iss.name,
+        dien_giai: $('dg_'+iss.key).value.trim(),
+        tg_hong: $('tg_'+iss.key).value
       });
     }
   });
 
-  if (hasMissingDesc) {
-    show(msg, 'error', '⚠️ Vui lòng điền Diễn giải cho tất cả các vấn đề được chọn "Có"');
-    return;
-  }
-
-  // Nếu không có vấn đề nào → gửi 1 record "Không có"
   if (records.length === 0) {
     records.push({
-      ma_ch, ten_ch, nguoi_bao, ngay_bao,
-      van_de: 'Không có vấn đề',
-      dien_giai: '',
-      tg_hong: ''
+      ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
+      tinh: selectedStore.tinh, nguoi_bao: nguoi, ngay_bao: ngay,
+      van_de: 'Không có vấn đề', dien_giai: '', tg_hong: ''
     });
   }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang gửi...';
-  msg.className = 'msg';
 
   let ok = 0, fail = 0;
   for (const rec of records) {
     try {
-      const resp = await fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'save', table: TABLE, data: rec }),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-      });
-      const r = await resp.json();
+      const r = await call({action:'save', table:'xay_dung', data:rec});
       if (r.success) ok++; else fail++;
-    } catch (e) {
-      fail++;
-    }
+    } catch(e) { fail++; }
   }
 
   if (fail === 0) {
-    show(msg, 'success', `✅ Đã gửi ${ok}/${records.length} bản ghi thành công!`);
-    // Reset
-    document.querySelectorAll('.has-issue').forEach(s => s.value = 'khong');
-    document.querySelectorAll('.dien-giai').forEach(t => t.value = '');
-    document.querySelectorAll('.tg-hong').forEach(i => i.value = '');
-    document.getElementById('ngay_bao').value = new Date().toISOString().split('T')[0];
+    showToast('✅ Đã gửi ' + ok + ' bản ghi thành công!');
+    // Reset form
+    $('selCh').value = ''; selectedStore = null;
+    $('vLine1').textContent = '—'; $('vLine2').textContent = '—';
+    $('nguoi_bao').value = '';
+    $('ngay_bao').value = new Date().toISOString().split('T')[0];
+    ISSUES.forEach(iss => {
+      document.querySelector('input[name="'+iss.key+'"][value="khong"]').checked = true;
+      $('det_'+iss.key).classList.remove('show');
+      $('dg_'+iss.key).value = '';
+      $('tg_'+iss.key).value = '';
+    });
+    updateBtn();
   } else {
-    show(msg, 'error', `⚠️ Gửi được ${ok}/${records.length} bản ghi. ${fail} lỗi. Thử lại nhé.`);
+    showToast('⚠️ Gửi ' + ok + '/' + records.length + '. ' + fail + ' lỗi.', true);
   }
-
-  btn.disabled = false;
-  btn.textContent = '📤 Gửi báo cáo';
+  btn.textContent = '📤 Gửi kết quả';
+  btn.disabled = !selectedStore;
 }
 
-function show(el, cls, text) {
-  el.className = 'msg ' + cls;
-  el.textContent = text;
-}
+init();
 </script>
 </body>
 </html>
