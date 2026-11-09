@@ -67,6 +67,22 @@
     margin-top:8px; font-weight:700; font-size:13px; animation:shake .4s}
   .warn.show{display:block}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  /* Unsurveyed card */
+  .un-card{background:linear-gradient(135deg,#fff8e1,#fff3cd); border-radius:12px; padding:14px; margin-top:10px;
+    border:1px solid var(--gold); display:none}
+  .un-card h2{font-size:14px; font-weight:700; color:#8B6914; margin-bottom:6px}
+  .un-card p{font-size:12px; color:var(--mut); margin-bottom:8px}
+  .un-list{max-height:280px; overflow-y:auto; font-size:12.5px; line-height:1.8}
+  .un-list .item{display:flex; align-items:center; gap:8px; padding:3px 0; border-bottom:1px solid rgba(0,0,0,.04)}
+  .un-list .item .sap{font-weight:700; color:var(--navy); min-width:48px}
+  .un-list .item .ten{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .un-badge{display:inline-block; background:var(--red); color:#fff; padding:1px 7px; border-radius:10px;
+    font-size:11px; font-weight:700}
+  /* Dashboard link */
+  .dash-link{display:block; text-align:center; margin-top:10px; font-size:13px; color:var(--navy); 
+    font-weight:600; text-decoration:none; padding:8px; background:var(--card); border-radius:10px;
+    border:1px solid var(--line)}
+  .dash-link:hover{background:#eef3fb}
 </style>
 </head>
 <body>
@@ -102,81 +118,20 @@
   <div class="card">
     <h2>3️⃣ Nội dung khảo sát</h2>
     <div id="issues">
-      <div class="sec">
-        <div class="st"><span class="name">🧱 Hỏng vỉa hè</span>
-          <div class="radios">
-            <label><input type="radio" name="vh" value="khong" checked onchange="toggleDetail(this)">Không</label>
-            <label><input type="radio" name="vh" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
-          </div>
-        </div>
-        <div class="detail" id="det_vh">
-          <label>Diễn giải</label>
-          <textarea id="dg_vh" placeholder="Mô tả tình trạng hư hỏng..."></textarea>
-          <label>Thời gian hỏng</label>
-          <input type="date" id="tg_vh">
-        </div>
-      </div>
-      <div class="sec">
-        <div class="st"><span class="name">🏠 Dột mái</span>
-          <div class="radios">
-            <label><input type="radio" name="dm" value="khong" checked onchange="toggleDetail(this)">Không</label>
-            <label><input type="radio" name="dm" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
-          </div>
-        </div>
-        <div class="detail" id="det_dm">
-          <label>Diễn giải</label>
-          <textarea id="dg_dm" placeholder="Vị trí dột, mức độ ảnh hưởng..."></textarea>
-          <label>Thời gian hỏng</label>
-          <input type="date" id="tg_dm">
-        </div>
-      </div>
-      <div class="sec">
-        <div class="st"><span class="name">🎨 Tróc sơn tường</span>
-          <div class="radios">
-            <label><input type="radio" name="ts" value="khong" checked onchange="toggleDetail(this)">Không</label>
-            <label><input type="radio" name="ts" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
-          </div>
-        </div>
-        <div class="detail" id="det_ts">
-          <label>Diễn giải</label>
-          <textarea id="dg_ts" placeholder="Vị trí, diện tích ước tính..."></textarea>
-          <label>Thời gian hỏng</label>
-          <input type="date" id="tg_ts">
-        </div>
-      </div>
-      <div class="sec">
-        <div class="st"><span class="name">💧 Hỏng đường thoát nước</span>
-          <div class="radios">
-            <label><input type="radio" name="tn" value="khong" checked onchange="toggleDetail(this)">Không</label>
-            <label><input type="radio" name="tn" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
-          </div>
-        </div>
-        <div class="detail" id="det_tn">
-          <label>Diễn giải</label>
-          <textarea id="dg_tn" placeholder="Vị trí tắc/hỏng, mức độ..."></textarea>
-          <label>Thời gian hỏng</label>
-          <input type="date" id="tg_tn">
-        </div>
-      </div>
-      <div class="sec">
-        <div class="st"><span class="name">🚽 Hỏng nhà vệ sinh</span>
-          <div class="radios">
-            <label><input type="radio" name="wc" value="khong" checked onchange="toggleDetail(this)">Không</label>
-            <label><input type="radio" name="wc" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
-          </div>
-        </div>
-        <div class="detail" id="det_wc">
-          <label>Diễn giải</label>
-          <textarea id="dg_wc" placeholder="Bồn cầu, lavabo, đường ống..."></textarea>
-          <label>Thời gian hỏng</label>
-          <input type="date" id="tg_wc">
-        </div>
-      </div>
     </div>
   </div>
 
   <div class="warn" id="warnBox"></div>
   <button class="btn" id="btnSubmit" disabled>📤 Gửi kết quả</button>
+
+  <!-- Unsurveyed card -->
+  <div class="un-card" id="unCard">
+    <h2>🤝 Cùng nhắc đồng đội làm khảo sát bạn nhé!</h2>
+    <p>QLKV <b id="unQlkv"></b> — <span id="unCount"></span></p>
+    <div class="un-list" id="unList"></div>
+  </div>
+
+  <a class="dash-link" href="dashboard.html">📊 Xem Dashboard báo cáo tiến độ</a>
   <div class="foot">MsT ✨ — Rural Survey</div>
 </div>
 
@@ -198,7 +153,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPmh_Erk9eDbpNCMQePscf
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-let STORES = [], selectedStore = null;
+let STORES = [], selectedStore = null, doneSaps = new Set(), lastQlkv = '';
+
 const ISSUES = [
   {key:'vh', name:'Hỏng vỉa hè', icon:'🧱'},
   {key:'dm', name:'Dột mái', icon:'🏠'},
@@ -210,8 +166,7 @@ const ISSUES = [
 function toggleDetail(radio) {
   const sec = radio.closest('.sec');
   const detail = sec.querySelector('.detail');
-  if (radio.value === 'co') detail.classList.add('show');
-  else detail.classList.remove('show');
+  detail.classList.toggle('show', radio.value === 'co');
 }
 
 function showToast(msg, isErr) {
@@ -232,9 +187,29 @@ async function call(data) {
 // ─── Store cascade ───
 async function init() {
   $('ngay_bao').value = new Date().toISOString().split('T')[0];
+  // Render issues
+  let html = '';
+  ISSUES.forEach(iss => {
+    html += `<div class="sec">
+      <div class="st"><span class="name">${iss.icon} ${iss.name}</span>
+        <div class="radios">
+          <label><input type="radio" name="${iss.key}" value="khong" checked onchange="toggleDetail(this)">Không</label>
+          <label><input type="radio" name="${iss.key}" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
+        </div>
+      </div>
+      <div class="detail" id="det_${iss.key}">
+        <label>Diễn giải</label>
+        <textarea id="dg_${iss.key}" placeholder="Mô tả chi tiết tình trạng..."></textarea>
+        <label>Thời gian hỏng</label>
+        <input type="date" id="tg_${iss.key}">
+      </div>
+    </div>`;
+  });
+  $('issues').innerHTML = html;
+
   try {
     const st = await call({action:'getStores', region:''});
-    if (st.ok) { STORES = st.stores || []; }
+    if (st.ok) STORES = st.stores || [];
     buildMien();
   } catch(e) { showToast('⚠️ Không kết nối được máy chủ', true); }
 }
@@ -250,8 +225,7 @@ $('selMien').onchange = function() {
   $('selVung').innerHTML = '<option value="">— Vùng —</option>';
   $('selQlkv').innerHTML = '<option value="">— QLKV —</option>';
   $('selCh').innerHTML = '<option value="">— CH —</option>';
-  selectedStore = null;
-  updateBtn();
+  resetStoreSelect();
   if (!this.value) return;
   const gdvs = [...new Set(STORES.filter(s => s.mien === this.value).map(s => s.gdv).filter(Boolean))].sort();
   gdvs.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; $('selVung').appendChild(o); });
@@ -260,8 +234,7 @@ $('selMien').onchange = function() {
 $('selVung').onchange = function() {
   $('selQlkv').innerHTML = '<option value="">— QLKV —</option>';
   $('selCh').innerHTML = '<option value="">— CH —</option>';
-  selectedStore = null;
-  updateBtn();
+  resetStoreSelect();
   if (!this.value) return;
   const qlkvs = [...new Set(STORES.filter(s => s.gdv === this.value).map(s => s.qlkv).filter(Boolean))].sort();
   qlkvs.forEach(q => { const o = document.createElement('option'); o.value = q; o.textContent = q; $('selQlkv').appendChild(o); });
@@ -269,56 +242,95 @@ $('selVung').onchange = function() {
 
 $('selQlkv').onchange = function() {
   $('selCh').innerHTML = '<option value="">— CH —</option>';
-  selectedStore = null;
-  updateBtn();
+  resetStoreSelect();
   if (!this.value) return;
   const chs = STORES.filter(s => s.qlkv === this.value && s.gdv === $('selVung').value);
   chs.forEach(c => {
     const o = document.createElement('option');
-    o.value = c.ma;
-    o.textContent = c.ma + ' — ' + (c.ten || '').substring(0, 40);
-    o.dataset.ten = c.ten || '';
-    o.dataset.tinh = c.tinh || '';
-    o.dataset.diachi = c.diaChi || '';
+    o.value = c.ma; o.textContent = c.ma + ' — ' + (c.ten || '').substring(0, 40);
+    o.dataset.ten = c.ten || ''; o.dataset.tinh = c.tinh || '';
+    o.dataset.diachi = c.diaChi || ''; o.dataset.qlkv = c.qlkv || '';
     $('selCh').appendChild(o);
   });
 };
 
 $('selCh').onchange = function() {
-  if (!this.value) { selectedStore = null; updateBtn(); return; }
+  if (!this.value) { resetStoreSelect(); return; }
   const opt = this.selectedOptions[0];
-  selectedStore = { ma: this.value, ten: opt.dataset.ten, tinh: opt.dataset.tinh, diaChi: opt.dataset.diachi };
+  selectedStore = { ma: this.value, ten: opt.dataset.ten, tinh: opt.dataset.tinh, 
+                    diaChi: opt.dataset.diachi, qlkv: opt.dataset.qlkv };
   $('vLine1').textContent = '📍 ' + esc(selectedStore.ten);
   $('vLine2').textContent = '🏙️ ' + esc(selectedStore.tinh) + (selectedStore.diaChi ? ' — ' + esc(selectedStore.diaChi) : '');
+  loadUnsurveyed();
   updateBtn();
 };
+
+function resetStoreSelect() {
+  selectedStore = null;
+  $('vLine1').textContent = '—'; $('vLine2').textContent = '—';
+  $('unCard').style.display = 'none';
+  updateBtn();
+}
 
 function updateBtn() {
   $('btnSubmit').disabled = !selectedStore || !$('nguoi_bao').value.trim();
 }
 $('nguoi_bao').oninput = updateBtn;
 
-// ─── Submit flow ───
+// ─── Unsurveyed ───
+async function loadUnsurveyed() {
+  if (!selectedStore || !selectedStore.qlkv) return;
+  lastQlkv = selectedStore.qlkv;
+  try {
+    const r = await call({action:'list', table:'xay_dung'});
+    if (r.success && r.rows) {
+      doneSaps = new Set(r.rows.map(row => row.ma_ch).filter(Boolean));
+    }
+    showUnsurveyed();
+  } catch(e) { doneSaps = new Set(); }
+}
+
+function showUnsurveyed() {
+  if (!lastQlkv) { $('unCard').style.display = 'none'; return; }
+  const allInQlkv = STORES.filter(s => s.qlkv === lastQlkv && s.gdv === $('selVung').value);
+  const unsurveyed = allInQlkv.filter(s => !doneSaps.has(s.ma));
+  
+  if (unsurveyed.length === 0) {
+    $('unCard').style.display = 'block';
+    $('unQlkv').textContent = lastQlkv;
+    $('unCount').innerHTML = '✅ <b>Tất cả đã làm khảo sát!</b>';
+    $('unList').textContent = '';
+    return;
+  }
+  
+  $('unCard').style.display = 'block';
+  $('unQlkv').textContent = lastQlkv;
+  $('unCount').innerHTML = '<span class="un-badge">' + unsurveyed.length + '</span> CH chưa khảo sát / ' + allInQlkv.length + ' CH';
+  
+  let html = '';
+  unsurveyed.forEach(s => {
+    html += '<div class="item"><span class="sap">' + esc(s.ma) + '</span><span class="ten">' + esc(s.ten || '') + '</span></div>';
+  });
+  $('unList').innerHTML = html;
+}
+
+// ─── Submit ───
 $('btnSubmit').onclick = function() {
   if (!selectedStore) return;
-  // Build confirmation
   const nguoi = $('nguoi_bao').value.trim();
   const ngay = $('ngay_bao').value;
   let html = '<div class="row"><b>CH:</b> ' + esc(selectedStore.ma) + ' — ' + esc(selectedStore.ten) + '</div>';
   html += '<div class="row"><b>Người báo:</b> ' + esc(nguoi) + ' — <b>Ngày:</b> ' + ngay + '</div>';
   html += '<div style="margin-top:8px;font-size:13px"><b>Vấn đề:</b></div>';
-  
   let hasAny = false;
   ISSUES.forEach(iss => {
     const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
     if (radio && radio.value === 'co') {
       hasAny = true;
-      const dg = $('dg_'+iss.key).value.trim();
-      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc(dg) + '</div>';
+      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc($('dg_'+iss.key).value.trim()) + '</div>';
     }
   });
   if (!hasAny) html += '<div class="row">✅ Không có vấn đề nào</div>';
-  
   $('confirmBody').innerHTML = html;
   $('confirmOverlay').style.display = 'flex';
 };
@@ -326,8 +338,7 @@ $('btnSubmit').onclick = function() {
 async function doSubmit() {
   $('confirmOverlay').style.display = 'none';
   const btn = $('btnSubmit');
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang gửi...';
+  btn.disabled = true; btn.textContent = '⏳ Đang gửi...';
 
   const nguoi = $('nguoi_bao').value.trim();
   const ngay = $('ngay_bao').value;
@@ -337,18 +348,13 @@ async function doSubmit() {
     const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
     if (radio && radio.value === 'co') {
       records.push({
-        ma_ch: selectedStore.ma,
-        ten_ch: selectedStore.ten,
-        tinh: selectedStore.tinh,
-        nguoi_bao: nguoi,
-        ngay_bao: ngay,
-        van_de: iss.name,
-        dien_giai: $('dg_'+iss.key).value.trim(),
+        ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
+        tinh: selectedStore.tinh, nguoi_bao: nguoi, ngay_bao: ngay,
+        van_de: iss.name, dien_giai: $('dg_'+iss.key).value.trim(),
         tg_hong: $('tg_'+iss.key).value
       });
     }
   });
-
   if (records.length === 0) {
     records.push({
       ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
@@ -366,24 +372,22 @@ async function doSubmit() {
   }
 
   if (fail === 0) {
-    showToast('✅ Đã gửi ' + ok + ' bản ghi thành công!');
+    showToast('✅ Đã gửi ' + ok + ' bản ghi!');
+    doneSaps.add(selectedStore.ma);
+    showUnsurveyed();
     // Reset form
-    $('selCh').value = ''; selectedStore = null;
-    $('vLine1').textContent = '—'; $('vLine2').textContent = '—';
-    $('nguoi_bao').value = '';
-    $('ngay_bao').value = new Date().toISOString().split('T')[0];
+    $('selCh').value = ''; resetStoreSelect();
+    $('nguoi_bao').value = ''; $('ngay_bao').value = new Date().toISOString().split('T')[0];
     ISSUES.forEach(iss => {
       document.querySelector('input[name="'+iss.key+'"][value="khong"]').checked = true;
       $('det_'+iss.key).classList.remove('show');
-      $('dg_'+iss.key).value = '';
-      $('tg_'+iss.key).value = '';
+      $('dg_'+iss.key).value = ''; $('tg_'+iss.key).value = '';
     });
     updateBtn();
   } else {
     showToast('⚠️ Gửi ' + ok + '/' + records.length + '. ' + fail + ' lỗi.', true);
   }
   btn.textContent = '📤 Gửi kết quả';
-  btn.disabled = !selectedStore;
 }
 
 init();
