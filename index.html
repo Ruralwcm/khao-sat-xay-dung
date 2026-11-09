@@ -43,6 +43,8 @@
   .detail.show{display:block}
   .detail textarea{min-height:60px; font-size:13px}
   .detail input[type=date]{max-width:180px}
+  .tg-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .tg-row .radios{flex-shrink:0}
   .btn{width:100%; margin-top:12px; background:var(--red); color:#fff; border:none; border-radius:11px;
     padding:13px; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer;
     box-shadow:0 5px 14px rgba(215,25,32,.28); transition:.15s}
@@ -67,7 +69,6 @@
     margin-top:8px; font-weight:700; font-size:13px; animation:shake .4s}
   .warn.show{display:block}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-  /* Unsurveyed card */
   .un-card{background:linear-gradient(135deg,#fff8e1,#fff3cd); border-radius:12px; padding:14px; margin-top:10px;
     border:1px solid var(--gold); display:none}
   .un-card h2{font-size:14px; font-weight:700; color:#8B6914; margin-bottom:6px}
@@ -78,7 +79,6 @@
   .un-list .item .ten{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .un-badge{display:inline-block; background:var(--red); color:#fff; padding:1px 7px; border-radius:10px;
     font-size:11px; font-weight:700}
-  /* Dashboard link */
   .dash-link{display:block; text-align:center; margin-top:10px; font-size:13px; color:var(--navy); 
     font-weight:600; text-decoration:none; padding:8px; background:var(--card); border-radius:10px;
     border:1px solid var(--line)}
@@ -117,14 +117,12 @@
 
   <div class="card">
     <h2>3️⃣ Nội dung khảo sát</h2>
-    <div id="issues">
-    </div>
+    <div id="issues"></div>
   </div>
 
   <div class="warn" id="warnBox"></div>
   <button class="btn" id="btnSubmit" disabled>📤 Gửi kết quả</button>
 
-  <!-- Unsurveyed card -->
   <div class="un-card" id="unCard">
     <h2>🤝 Cùng nhắc đồng đội làm khảo sát bạn nhé!</h2>
     <p>QLKV <b id="unQlkv"></b> — <span id="unCount"></span></p>
@@ -168,6 +166,11 @@ function toggleDetail(radio) {
   const detail = sec.querySelector('.detail');
   detail.classList.toggle('show', radio.value === 'co');
 }
+function toggleTgDate(radio) {
+  const sec = radio.closest('.detail');
+  const dateInput = sec.querySelector('.tg-date-input');
+  dateInput.style.display = radio.value === 'quakhu' ? 'block' : 'none';
+}
 
 function showToast(msg, isErr) {
   const t = $('toast');
@@ -184,10 +187,10 @@ async function call(data) {
   return r.json();
 }
 
-// ─── Store cascade ───
+// ─── Init ───
 async function init() {
   $('ngay_bao').value = new Date().toISOString().split('T')[0];
-  // Render issues
+  // Render issues với toggle Hiện tại / Quá khứ
   let html = '';
   ISSUES.forEach(iss => {
     html += `<div class="sec">
@@ -201,19 +204,29 @@ async function init() {
         <label>Diễn giải</label>
         <textarea id="dg_${iss.key}" placeholder="Mô tả chi tiết tình trạng..."></textarea>
         <label>Thời gian hỏng</label>
-        <input type="date" id="tg_${iss.key}">
+        <div class="tg-row">
+          <div class="radios">
+            <label><input type="radio" name="tgtype_${iss.key}" value="hientai" checked onchange="toggleTgDate(this)">Hiện tại</label>
+            <label><input type="radio" name="tgtype_${iss.key}" value="quakhu" onchange="toggleTgDate(this)">Quá khứ</label>
+          </div>
+          <input type="date" id="tg_${iss.key}" class="tg-date-input" style="display:none;max-width:160px">
+        </div>
       </div>
     </div>`;
   });
   $('issues').innerHTML = html;
 
+  // Load stores from static JSON (reliable, no GAS dependency)
   try {
-    const st = await call({action:'getStores', region:''});
-    if (st.ok) STORES = st.stores || [];
+    const resp = await fetch('storelist.json');
+    STORES = await resp.json();
     buildMien();
-  } catch(e) { showToast('⚠️ Không kết nối được máy chủ', true); }
+  } catch(e) {
+    showToast('⚠️ Không tải được danh sách CH. F5 thử lại nhé.', true);
+  }
 }
 
+// ─── Store cascade ───
 function buildMien() {
   const miens = [...new Set(STORES.map(s => s.mien).filter(Boolean))].sort();
   const sel = $('selMien');
@@ -236,7 +249,8 @@ $('selVung').onchange = function() {
   $('selCh').innerHTML = '<option value="">— CH —</option>';
   resetStoreSelect();
   if (!this.value) return;
-  const qlkvs = [...new Set(STORES.filter(s => s.gdv === this.value).map(s => s.qlkv).filter(Boolean))].sort();
+  const mien = $('selMien').value;
+  const qlkvs = [...new Set(STORES.filter(s => s.gdv === this.value && s.mien === mien).map(s => s.qlkv).filter(Boolean))].sort();
   qlkvs.forEach(q => { const o = document.createElement('option'); o.value = q; o.textContent = q; $('selQlkv').appendChild(o); });
 };
 
@@ -244,7 +258,8 @@ $('selQlkv').onchange = function() {
   $('selCh').innerHTML = '<option value="">— CH —</option>';
   resetStoreSelect();
   if (!this.value) return;
-  const chs = STORES.filter(s => s.qlkv === this.value && s.gdv === $('selVung').value);
+  const mien = $('selMien').value, gdv = $('selVung').value;
+  const chs = STORES.filter(s => s.qlkv === this.value && s.gdv === gdv && s.mien === mien);
   chs.forEach(c => {
     const o = document.createElement('option');
     o.value = c.ma; o.textContent = c.ma + ' — ' + (c.ten || '').substring(0, 40);
@@ -292,7 +307,8 @@ async function loadUnsurveyed() {
 
 function showUnsurveyed() {
   if (!lastQlkv) { $('unCard').style.display = 'none'; return; }
-  const allInQlkv = STORES.filter(s => s.qlkv === lastQlkv && s.gdv === $('selVung').value);
+  const mien = $('selMien').value, gdv = $('selVung').value;
+  const allInQlkv = STORES.filter(s => s.qlkv === lastQlkv && s.gdv === gdv && s.mien === mien);
   const unsurveyed = allInQlkv.filter(s => !doneSaps.has(s.ma));
   
   if (unsurveyed.length === 0) {
@@ -327,7 +343,9 @@ $('btnSubmit').onclick = function() {
     const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
     if (radio && radio.value === 'co') {
       hasAny = true;
-      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc($('dg_'+iss.key).value.trim()) + '</div>';
+      const tgType = document.querySelector('input[name="tgtype_'+iss.key+'"]:checked');
+      const tgVal = tgType && tgType.value === 'hientai' ? 'Hiện tại' : ($('tg_'+iss.key).value || '');
+      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc($('dg_'+iss.key).value.trim()) + ' [' + tgVal + ']</div>';
     }
   });
   if (!hasAny) html += '<div class="row">✅ Không có vấn đề nào</div>';
@@ -347,11 +365,13 @@ async function doSubmit() {
   ISSUES.forEach(iss => {
     const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
     if (radio && radio.value === 'co') {
+      const tgType = document.querySelector('input[name="tgtype_'+iss.key+'"]:checked');
+      const tgVal = tgType && tgType.value === 'hientai' ? 'Hiện tại' : ($('tg_'+iss.key).value || '');
       records.push({
         ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
         tinh: selectedStore.tinh, nguoi_bao: nguoi, ngay_bao: ngay,
         van_de: iss.name, dien_giai: $('dg_'+iss.key).value.trim(),
-        tg_hong: $('tg_'+iss.key).value
+        tg_hong: tgVal
       });
     }
   });
@@ -375,13 +395,13 @@ async function doSubmit() {
     showToast('✅ Đã gửi ' + ok + ' bản ghi!');
     doneSaps.add(selectedStore.ma);
     showUnsurveyed();
-    // Reset form
     $('selCh').value = ''; resetStoreSelect();
     $('nguoi_bao').value = ''; $('ngay_bao').value = new Date().toISOString().split('T')[0];
     ISSUES.forEach(iss => {
       document.querySelector('input[name="'+iss.key+'"][value="khong"]').checked = true;
       $('det_'+iss.key).classList.remove('show');
       $('dg_'+iss.key).value = ''; $('tg_'+iss.key).value = '';
+      document.querySelector('input[name="tgtype_'+iss.key+'"][value="hientai"]').checked = true;
     });
     updateBtn();
   } else {
