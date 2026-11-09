@@ -48,7 +48,7 @@
   .btn{width:100%; margin-top:12px; background:var(--red); color:#fff; border:none; border-radius:11px;
     padding:13px; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer;
     box-shadow:0 5px 14px rgba(215,25,32,.28); transition:.15s}
-  .btn:active{transform:scale(.98)} .btn:disabled{opacity:.5; cursor:not-allowed}
+  .btn:active{transform:scale(.98)} .btn:disabled{background:#b0b8c4; cursor:not-allowed; box-shadow:none; color:#fff}
   .toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(80px);
     background:#166534; color:#fff; padding:11px 20px; border-radius:10px; font-weight:600; font-size:13px;
     transition:.3s; box-shadow:0 6px 18px rgba(0,0,0,.18); z-index:50}
@@ -281,7 +281,6 @@ function resetStoreSelect() {
 function updateBtn() {
   $('btnSubmit').disabled = !selectedStore;
 }
-$('nguoi_bao').oninput = updateBtn;
 
 // ─── Unsurveyed ───
 async function loadUnsurveyed() {
