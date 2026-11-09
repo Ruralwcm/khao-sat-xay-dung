@@ -8,7 +8,7 @@
   :root {
     --navy: #0A2240; --steel: #1F4E79; --red: #C00000;
     --paper: #FFF; --band: #F3F5F8; --rule: #CBD3DD;
-    --ink: #1A1F26; --ink2: #4A5260;
+    --ink: #1A1F26; --ink2: #4A5260; --green: #1B7A4A;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -18,7 +18,7 @@
     min-height: 100vh;
   }
   .page { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
-  
+
   .hero {
     background: linear-gradient(135deg, var(--navy), var(--steel));
     color: #fff; padding: 28px 24px; border-radius: 10px 10px 0 0;
@@ -26,20 +26,20 @@
   }
   .hero h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
   .hero p { font-size: 14px; opacity: 0.85; }
-  
+
   .card {
     background: var(--paper); border: 1px solid var(--rule);
     border-top: 0; border-radius: 0 0 10px 10px;
     padding: 24px;
   }
-  
+
   .store-info {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 14px; padding: 16px; background: var(--band);
     border-radius: 8px; margin-bottom: 20px;
   }
   .store-info .full { grid-column: 1 / -1; }
-  
+
   label {
     display: block; font-size: 13px; font-weight: 600;
     color: var(--steel); margin-bottom: 4px;
@@ -52,7 +52,7 @@
   input:focus, select:focus, textarea:focus {
     outline: none; border-color: var(--steel);
   }
-  
+
   .section-title {
     font-size: 16px; font-weight: 700; color: var(--navy);
     margin: 24px 0 12px; padding-bottom: 8px;
@@ -63,25 +63,23 @@
     background: var(--navy); color: #fff; font-size: 13px;
     width: 24px; height: 24px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
   }
-  
+
   .issue-row {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px; padding: 14px 16px; border: 1px solid var(--rule);
+    padding: 14px 16px; border: 1px solid var(--rule);
     border-radius: 8px; margin-bottom: 10px;
     background: #FAFBFC;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
   .issue-row .issue-name {
     grid-column: 1 / -1;
     font-weight: 700; font-size: 14px; color: var(--red);
     display: flex; align-items: center; gap: 6px;
   }
-  .issue-row .issue-name::before {
-    content: "⚠"; font-size: 16px;
-  }
+  .issue-row .issue-name::before { content: "⚠"; font-size: 16px; }
   .issue-row .full { grid-column: 1 / -1; }
-  
+
   .btn-submit {
     display: block; width: 100%; padding: 14px;
     background: var(--red); color: #fff; border: none;
@@ -92,14 +90,14 @@
   .btn-submit:hover { background: #A00000; }
   .btn-submit:active { transform: scale(0.98); }
   .btn-submit:disabled { background: #CBD3DD; cursor: not-allowed; }
-  
+
   .msg {
     text-align: center; padding: 12px; border-radius: 8px;
     margin-top: 12px; display: none; font-weight: 600;
   }
-  .msg.success { background: #E8F5E9; color: #1B7A4A; display: block; }
+  .msg.success { background: #E8F5E9; color: var(--green); display: block; }
   .msg.error { background: #FFEBEE; color: #B42318; display: block; }
-  
+
   .note {
     font-size: 12px; color: var(--ink2); margin-top: 16px;
     padding: 12px; background: var(--band); border-radius: 6px;
@@ -122,16 +120,15 @@
   <div class="card">
     <div class="store-info">
       <div class="full">
-        <label>Mã CH (Mã SAP)</label>
-        <input type="text" id="ma_ch" placeholder="VD: 2797" required list="store-list">
-        <datalist id="store-list"></datalist>
+        <label>Mã CH (Mã SAP) <span style="color:#C00000">*</span></label>
+        <input type="text" id="ma_ch" placeholder="VD: 2797" required>
       </div>
       <div class="full">
-        <label>Tên cửa hàng</label>
+        <label>Tên cửa hàng <span style="color:#C00000">*</span></label>
         <input type="text" id="ten_ch" placeholder="Tên cửa hàng" required>
       </div>
       <div>
-        <label>Người báo cáo</label>
+        <label>Người báo cáo <span style="color:#C00000">*</span></label>
         <input type="text" id="nguoi_bao" placeholder="Họ tên" required>
       </div>
       <div>
@@ -141,202 +138,148 @@
     </div>
 
     <div class="section-title"><span class="num">1</span> Vấn đề xây dựng</div>
-    <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Chọn tick vào ô bên cạnh nếu có vấn đề, để trống nếu không. Mỗi vấn đề cần ghi rõ diễn giải và thời gian bắt đầu hỏng.</p>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">
+      Chọn "Có" nếu có vấn đề và điền Diễn giải + Thời gian hỏng. Chọn "Không" nếu không có.
+    </p>
 
-    <div class="issue-row">
-      <div class="issue-name">🧱 Hỏng vỉa hè</div>
-      <div>
-        <label>Có vấn đề?</label>
-        <select class="has-issue"><option value="khong">Không</option><option value="co">Có</option></select>
-      </div>
-      <div class="full">
-        <label>Diễn giải</label>
-        <textarea rows="2" class="dien-giai" placeholder="Mô tả chi tiết tình trạng hư hỏng..."></textarea>
-      </div>
-      <div>
-        <label>Thời gian hỏng</label>
-        <input type="date" class="tg-hong">
-      </div>
-    </div>
-
-    <div class="issue-row">
-      <div class="issue-name">🏠 Dột mái</div>
-      <div>
-        <label>Có vấn đề?</label>
-        <select class="has-issue"><option value="khong">Không</option><option value="co">Có</option></select>
-      </div>
-      <div class="full">
-        <label>Diễn giải</label>
-        <textarea rows="2" class="dien-giai" placeholder="Vị trí dột, mức độ ảnh hưởng..."></textarea>
-      </div>
-      <div>
-        <label>Thời gian hỏng</label>
-        <input type="date" class="tg-hong">
-      </div>
-    </div>
-
-    <div class="issue-row">
-      <div class="issue-name">🎨 Tróc sơn tường</div>
-      <div>
-        <label>Có vấn đề?</label>
-        <select class="has-issue"><option value="khong">Không</option><option value="co">Có</option></select>
-      </div>
-      <div class="full">
-        <label>Diễn giải</label>
-        <textarea rows="2" class="dien-giai" placeholder="Vị trí tường bị tróc, diện tích ước tính..."></textarea>
-      </div>
-      <div>
-        <label>Thời gian hỏng</label>
-        <input type="date" class="tg-hong">
-      </div>
-    </div>
-
-    <div class="issue-row">
-      <div class="issue-name">💧 Hỏng đường thoát nước</div>
-      <div>
-        <label>Có vấn đề?</label>
-        <select class="has-issue"><option value="khong">Không</option><option value="co">Có</option></select>
-      </div>
-      <div class="full">
-        <label>Diễn giải</label>
-        <textarea rows="2" class="dien-giai" placeholder="Vị trí tắc/ hỏng, mức độ nghiêm trọng..."></textarea>
-      </div>
-      <div>
-        <label>Thời gian hỏng</label>
-        <input type="date" class="tg-hong">
-      </div>
-    </div>
-
-    <div class="issue-row">
-      <div class="issue-name">🚽 Hỏng nhà vệ sinh</div>
-      <div>
-        <label>Có vấn đề?</label>
-        <select class="has-issue"><option value="khong">Không</option><option value="co">Có</option></select>
-      </div>
-      <div class="full">
-        <label>Diễn giải</label>
-        <textarea rows="2" class="dien-giai" placeholder="Mô tả hư hỏng cụ thể (bồn cầu, lavabo, đường ống...)..."></textarea>
-      </div>
-      <div>
-        <label>Thời gian hỏng</label>
-        <input type="date" class="tg-hong">
-      </div>
+    <div id="issues-container">
     </div>
 
     <button class="btn-submit" onclick="submitForm()">📤 Gửi báo cáo</button>
     <div class="msg" id="msg"></div>
 
     <div class="note">
-      📌 <b>Lưu ý:</b> Vui lòng kiểm tra kỹ từng hạng mục. Vấn đề nào <b>không có</b> thì chọn "Không". 
-      Vấn đề nào <b>có</b> thì chọn "Có" và điền đầy đủ Diễn giải + Thời gian hỏng.
+      📌 <b>Hướng dẫn:</b> Kiểm tra từng hạng mục. Vấn đề nào <b>có</b> → chọn "Có" + mô tả chi tiết + thời gian bắt đầu hỏng.
     </div>
   </div>
 </div>
 
 <script>
-// Auto-fill today's date
-document.getElementById('ngay_bao').value = new Date().toISOString().split('T')[0];
-
-// GAS URL — cập nhật sau khi deploy
-// CẬP NHẬT: Deploy Code.gs → Web App → paste URL mới vào đây
-const GAS_URL = 'CHUA_DEPLOY_GAS';
+// ─── CONFIG ───
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPmh_Erk9eDbpNCMQePscfl067merQamb1xfvKbtjyUmjw3jTUU4Z43LzziuQb7H1X/exec';
+const TABLE = 'xay_dung';
 
 const ISSUES = [
-  'Hỏng vỉa hè', 'Dột mái', 'Tróc sơn tường', 
-  'Hỏng đường thoát nước', 'Hỏng nhà vệ sinh'
+  {name: 'Hỏng vỉa hè', icon: '🧱'},
+  {name: 'Dột mái', icon: '🏠'},
+  {name: 'Tróc sơn tường', icon: '🎨'},
+  {name: 'Hỏng đường thoát nước', icon: '💧'},
+  {name: 'Hỏng nhà vệ sinh', icon: '🚽'}
 ];
 
+// ─── INIT ───
+document.getElementById('ngay_bao').value = new Date().toISOString().split('T')[0];
+
+const container = document.getElementById('issues-container');
+ISSUES.forEach((iss, i) => {
+  container.insertAdjacentHTML('beforeend', `
+    <div class="issue-row">
+      <div class="issue-name">${iss.icon} ${iss.name}</div>
+      <div>
+        <label>Có vấn đề?</label>
+        <select class="has-issue" data-idx="${i}">
+          <option value="khong">Không</option>
+          <option value="co">Có</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>Diễn giải</label>
+        <textarea rows="2" class="dien-giai" data-idx="${i}" placeholder="Mô tả chi tiết tình trạng..."></textarea>
+      </div>
+      <div>
+        <label>Thời gian hỏng</label>
+        <input type="date" class="tg-hong" data-idx="${i}">
+      </div>
+    </div>
+  `);
+});
+
+// ─── SUBMIT ───
 async function submitForm() {
   const btn = document.querySelector('.btn-submit');
   const msg = document.getElementById('msg');
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang gửi...';
-  msg.className = 'msg';
-  msg.textContent = '';
-
+  
   const ma_ch = document.getElementById('ma_ch').value.trim();
   const ten_ch = document.getElementById('ten_ch').value.trim();
   const nguoi_bao = document.getElementById('nguoi_bao').value.trim();
   const ngay_bao = document.getElementById('ngay_bao').value;
 
   if (!ma_ch || !ten_ch || !nguoi_bao || !ngay_bao) {
-    msg.className = 'msg error';
-    msg.textContent = '⚠️ Vui lòng điền đầy đủ Mã CH, Tên CH, Người báo cáo và Ngày báo cáo';
-    btn.disabled = false;
-    btn.textContent = '📤 Gửi báo cáo';
+    show(msg, 'error', '⚠️ Vui lòng điền đầy đủ Mã CH, Tên CH, Người báo cáo và Ngày');
     return;
   }
 
-  const rows = document.querySelectorAll('.issue-row');
-  const issues = [];
-  rows.forEach((row, i) => {
+  const records = [];
+  let hasMissingDesc = false;
+
+  document.querySelectorAll('.issue-row').forEach((row, i) => {
     const hasIssue = row.querySelector('.has-issue').value;
     const dienGiai = row.querySelector('.dien-giai').value.trim();
     const tgHong = row.querySelector('.tg-hong').value;
-    
+
     if (hasIssue === 'co') {
-      if (!dienGiai) {
-        issues.push({ error: true, name: ISSUES[i] });
-        return;
-      }
-      issues.push({
-        van_de: ISSUES[i],
+      if (!dienGiai) { hasMissingDesc = true; return; }
+      records.push({
+        ma_ch, ten_ch, nguoi_bao, ngay_bao,
+        van_de: ISSUES[i].name,
         dien_giai: dienGiai,
-        tg_hong: tgHong || '',
-        co_van_de: true
-      });
-    } else {
-      issues.push({
-        van_de: ISSUES[i],
-        dien_giai: '',
-        tg_hong: '',
-        co_van_de: false
+        tg_hong: tgHong
       });
     }
   });
 
-  // Check for errors
-  const missingDesc = issues.find(i => i.error);
-  if (missingDesc) {
-    msg.className = 'msg error';
-    msg.textContent = `⚠️ Vui lòng điền Diễn giải cho: ${missingDesc.name}`;
-    btn.disabled = false;
-    btn.textContent = '📤 Gửi báo cáo';
+  if (hasMissingDesc) {
+    show(msg, 'error', '⚠️ Vui lòng điền Diễn giải cho tất cả các vấn đề được chọn "Có"');
     return;
   }
 
-  try {
-    const payload = {
-      action: 'saveXayDung',
+  // Nếu không có vấn đề nào → gửi 1 record "Không có"
+  if (records.length === 0) {
+    records.push({
       ma_ch, ten_ch, nguoi_bao, ngay_bao,
-      issues: issues.filter(i => i.co_van_de)
-    };
-
-    const resp = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      van_de: 'Không có vấn đề',
+      dien_giai: '',
+      tg_hong: ''
     });
+  }
 
-    const result = await resp.json();
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang gửi...';
+  msg.className = 'msg';
 
-    if (result.ok) {
-      msg.className = 'msg success';
-      msg.textContent = '✅ Đã gửi báo cáo thành công! Cảm ơn bạn.';
-      // Reset form
-      document.querySelectorAll('.has-issue').forEach(s => s.value = 'khong');
-      document.querySelectorAll('.dien-giai').forEach(t => t.value = '');
-      document.querySelectorAll('.tg-hong').forEach(i => i.value = '');
-    } else {
-      throw new Error(result.error || 'Lỗi không xác định');
+  let ok = 0, fail = 0;
+  for (const rec of records) {
+    try {
+      const resp = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', table: TABLE, data: rec }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const r = await resp.json();
+      if (r.success) ok++; else fail++;
+    } catch (e) {
+      fail++;
     }
-  } catch (e) {
-    msg.className = 'msg error';
-    msg.textContent = `❌ Lỗi gửi báo cáo: ${e.message}. Vui lòng thử lại.`;
+  }
+
+  if (fail === 0) {
+    show(msg, 'success', `✅ Đã gửi ${ok}/${records.length} bản ghi thành công!`);
+    // Reset
+    document.querySelectorAll('.has-issue').forEach(s => s.value = 'khong');
+    document.querySelectorAll('.dien-giai').forEach(t => t.value = '');
+    document.querySelectorAll('.tg-hong').forEach(i => i.value = '');
+    document.getElementById('ngay_bao').value = new Date().toISOString().split('T')[0];
+  } else {
+    show(msg, 'error', `⚠️ Gửi được ${ok}/${records.length} bản ghi. ${fail} lỗi. Thử lại nhé.`);
   }
 
   btn.disabled = false;
   btn.textContent = '📤 Gửi báo cáo';
+}
+
+function show(el, cls, text) {
+  el.className = 'msg ' + cls;
+  el.textContent = text;
 }
 </script>
 </body>
