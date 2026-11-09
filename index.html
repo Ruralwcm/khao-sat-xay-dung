@@ -79,10 +79,8 @@
   .un-list .item .ten{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .un-badge{display:inline-block; background:var(--red); color:#fff; padding:1px 7px; border-radius:10px;
     font-size:11px; font-weight:700}
-  .dash-link{display:block; text-align:center; margin-top:10px; font-size:13px; color:var(--navy); 
-    font-weight:600; text-decoration:none; padding:8px; background:var(--card); border-radius:10px;
-    border:1px solid var(--line)}
-  .dash-link:hover{background:#eef3fb}
+  .dash-link{display:inline; font-size:11px; color:var(--mut); 
+    font-weight:500; text-decoration:none}
 </style>
 </head>
 <body>
@@ -181,13 +179,14 @@ async function call(data) {
 
 // ─── Init ───
 async function init() {
+  const today = new Date().toISOString().split('T')[0];
   // Render issues với toggle Hiện tại / Quá khứ
   let html = '';
   ISSUES.forEach(iss => {
     html += `<div class="sec">
       <div class="st"><span class="name">${iss.icon} ${iss.name}</span>
         <div class="radios">
-          <label><input type="radio" name="${iss.key}" value="khong" checked onchange="toggleDetail(this)">Không</label>
+          <label><input type="radio" name="${iss.key}" value="khong" onchange="toggleDetail(this)">Không</label>
           <label><input type="radio" name="${iss.key}" value="co" class="ko" onchange="toggleDetail(this)">Có</label>
         </div>
       </div>
@@ -200,7 +199,7 @@ async function init() {
             <label><input type="radio" name="tgtype_${iss.key}" value="hientai" checked onchange="toggleTgDate(this)">Hiện tại</label>
             <label><input type="radio" name="tgtype_${iss.key}" value="quakhu" onchange="toggleTgDate(this)">Quá khứ</label>
           </div>
-          <input type="date" id="tg_${iss.key}" class="tg-date-input" style="display:none;max-width:160px">
+          <input type="date" id="tg_${iss.key}" class="tg-date-input" style="display:none;max-width:160px" max="${today}">
         </div>
       </div>
     </div>`;
@@ -328,15 +327,23 @@ $('btnSubmit').onclick = function() {
   html += '<div class="row"><b>Ngày:</b> ' + ngay + '</div>';
   html += '<div style="margin-top:8px;font-size:13px"><b>Vấn đề:</b></div>';
   let hasAny = false;
+  let hasUnanswered = false;
   ISSUES.forEach(iss => {
     const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
-    if (radio && radio.value === 'co') {
+    if (!radio) { hasUnanswered = true; return; }
+    if (radio.value === 'co') {
       hasAny = true;
       const tgType = document.querySelector('input[name="tgtype_'+iss.key+'"]:checked');
       const tgVal = tgType && tgType.value === 'hientai' ? 'Hiện tại' : ($('tg_'+iss.key).value || '');
       html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc($('dg_'+iss.key).value.trim()) + ' [' + tgVal + ']</div>';
+    } else {
+      html += '<div class="row">✅ ' + iss.name + ': Không</div>';
     }
   });
+  if (hasUnanswered) {
+    showToast('⚠️ Vui lòng chọn Có/Không cho tất cả 5 hạng mục', true);
+    return;
+  }
   if (!hasAny) html += '<div class="row">✅ Không có vấn đề nào</div>';
   $('confirmBody').innerHTML = html;
   $('confirmOverlay').style.display = 'flex';
@@ -385,7 +392,8 @@ async function doSubmit() {
     showUnsurveyed();
     $('selCh').value = ''; resetStoreSelect();
     ISSUES.forEach(iss => {
-      document.querySelector('input[name="'+iss.key+'"][value="khong"]').checked = true;
+      document.querySelector('input[name="'+iss.key+'"][value="khong"]').checked = false;
+      document.querySelector('input[name="'+iss.key+'"][value="co"]').checked = false;
       $('det_'+iss.key).classList.remove('show');
       $('dg_'+iss.key).value = ''; $('tg_'+iss.key).value = '';
       document.querySelector('input[name="tgtype_'+iss.key+'"][value="hientai"]').checked = true;
