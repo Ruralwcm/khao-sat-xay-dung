@@ -42,9 +42,7 @@
   .detail{display:none; margin-top:8px}
   .detail.show{display:block}
   .detail textarea{min-height:60px; font-size:13px}
-  .detail input[type=date]{max-width:180px}
-  .tg-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
-  .tg-row .radios{flex-shrink:0}
+  .detail input[type=date]{max-width:180px; font-size:13px; padding:8px 12px}
   .btn{width:100%; margin-top:12px; background:var(--red); color:#fff; border:none; border-radius:11px;
     padding:13px; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer;
     box-shadow:0 5px 14px rgba(215,25,32,.28); transition:.15s}
@@ -156,11 +154,6 @@ function toggleDetail(radio) {
   const detail = sec.querySelector('.detail');
   detail.classList.toggle('show', radio.value === 'co');
 }
-function toggleTgDate(radio) {
-  const sec = radio.closest('.detail');
-  const dateInput = sec.querySelector('.tg-date-input');
-  dateInput.style.display = radio.value === 'quakhu' ? 'block' : 'none';
-}
 
 function showToast(msg, isErr) {
   const t = $('toast');
@@ -194,13 +187,7 @@ async function init() {
         <label>Diễn giải</label>
         <textarea id="dg_${iss.key}" placeholder="Mô tả chi tiết tình trạng..."></textarea>
         <label>Thời gian hỏng</label>
-        <div class="tg-row">
-          <div class="radios">
-            <label><input type="radio" name="tgtype_${iss.key}" value="hientai" checked onchange="toggleTgDate(this)">Hiện tại</label>
-            <label><input type="radio" name="tgtype_${iss.key}" value="quakhu" onchange="toggleTgDate(this)">Quá khứ</label>
-          </div>
-          <input type="date" id="tg_${iss.key}" class="tg-date-input" style="display:none;max-width:160px" max="${today}">
-        </div>
+        <input type="date" id="tg_${iss.key}" style="max-width:180px" max="${today}">
       </div>
     </div>`;
   });
@@ -335,9 +322,8 @@ $('btnSubmit').onclick = function() {
     if (!radio) { hasUnanswered = true; return; }
     if (radio.value === 'co') {
       hasAny = true;
-      const tgType = document.querySelector('input[name="tgtype_'+iss.key+'"]:checked');
-      const tgVal = tgType && tgType.value === 'hientai' ? 'Hiện tại' : ($('tg_'+iss.key).value || '');
-      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc($('dg_'+iss.key).value.trim()) + ' [' + tgVal + ']</div>';
+      const tgVal = $('tg_'+iss.key).value || '—';
+      html += '<div class="row">⚠️ <b>' + iss.name + '</b>: ' + esc($('dg_'+iss.key).value.trim()) + (tgVal !== '—' ? ' [' + tgVal + ']' : '') + '</div>';
     } else {
       html += '<div class="row">✅ ' + iss.name + ': Không</div>';
     }
@@ -362,8 +348,7 @@ async function doSubmit() {
   ISSUES.forEach(iss => {
     const radio = document.querySelector('input[name="'+iss.key+'"]:checked');
     if (radio && radio.value === 'co') {
-      const tgType = document.querySelector('input[name="tgtype_'+iss.key+'"]:checked');
-      const tgVal = tgType && tgType.value === 'hientai' ? 'Hiện tại' : ($('tg_'+iss.key).value || '');
+      const tgVal = $('tg_'+iss.key).value || '';
       records.push({
         ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
         tinh: selectedStore.tinh, ngay_bao: ngay,
@@ -398,7 +383,6 @@ async function doSubmit() {
       document.querySelector('input[name="'+iss.key+'"][value="co"]').checked = false;
       $('det_'+iss.key).classList.remove('show');
       $('dg_'+iss.key).value = ''; $('tg_'+iss.key).value = '';
-      document.querySelector('input[name="tgtype_'+iss.key+'"][value="hientai"]').checked = true;
     });
     updateBtn();
   } else {
