@@ -108,15 +108,7 @@
   </div>
 
   <div class="card">
-    <h2>2️⃣ Người báo cáo</h2>
-    <div class="cas">
-      <div><label>Họ tên</label><input type="text" id="nguoi_bao" placeholder="Người báo cáo"></div>
-      <div><label>Ngày</label><input type="date" id="ngay_bao"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>3️⃣ Nội dung khảo sát</h2>
+    <h2>2️⃣ Nội dung khảo sát</h2>
     <div id="issues"></div>
   </div>
 
@@ -189,7 +181,6 @@ async function call(data) {
 
 // ─── Init ───
 async function init() {
-  $('ngay_bao').value = new Date().toISOString().split('T')[0];
   // Render issues với toggle Hiện tại / Quá khứ
   let html = '';
   ISSUES.forEach(iss => {
@@ -288,7 +279,7 @@ function resetStoreSelect() {
 }
 
 function updateBtn() {
-  $('btnSubmit').disabled = !selectedStore || !$('nguoi_bao').value.trim();
+  $('btnSubmit').disabled = !selectedStore;
 }
 $('nguoi_bao').oninput = updateBtn;
 
@@ -333,10 +324,9 @@ function showUnsurveyed() {
 // ─── Submit ───
 $('btnSubmit').onclick = function() {
   if (!selectedStore) return;
-  const nguoi = $('nguoi_bao').value.trim();
-  const ngay = $('ngay_bao').value;
+  const ngay = new Date().toISOString().split('T')[0];
   let html = '<div class="row"><b>CH:</b> ' + esc(selectedStore.ma) + ' — ' + esc(selectedStore.ten) + '</div>';
-  html += '<div class="row"><b>Người báo:</b> ' + esc(nguoi) + ' — <b>Ngày:</b> ' + ngay + '</div>';
+  html += '<div class="row"><b>Ngày:</b> ' + ngay + '</div>';
   html += '<div style="margin-top:8px;font-size:13px"><b>Vấn đề:</b></div>';
   let hasAny = false;
   ISSUES.forEach(iss => {
@@ -358,8 +348,7 @@ async function doSubmit() {
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = '⏳ Đang gửi...';
 
-  const nguoi = $('nguoi_bao').value.trim();
-  const ngay = $('ngay_bao').value;
+  const ngay = new Date().toISOString().split('T')[0];
   const records = [];
   
   ISSUES.forEach(iss => {
@@ -369,7 +358,7 @@ async function doSubmit() {
       const tgVal = tgType && tgType.value === 'hientai' ? 'Hiện tại' : ($('tg_'+iss.key).value || '');
       records.push({
         ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
-        tinh: selectedStore.tinh, nguoi_bao: nguoi, ngay_bao: ngay,
+        tinh: selectedStore.tinh, ngay_bao: ngay,
         van_de: iss.name, dien_giai: $('dg_'+iss.key).value.trim(),
         tg_hong: tgVal
       });
@@ -378,7 +367,7 @@ async function doSubmit() {
   if (records.length === 0) {
     records.push({
       ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
-      tinh: selectedStore.tinh, nguoi_bao: nguoi, ngay_bao: ngay,
+      tinh: selectedStore.tinh, ngay_bao: ngay,
       van_de: 'Không có vấn đề', dien_giai: '', tg_hong: ''
     });
   }
@@ -396,7 +385,6 @@ async function doSubmit() {
     doneSaps.add(selectedStore.ma);
     showUnsurveyed();
     $('selCh').value = ''; resetStoreSelect();
-    $('nguoi_bao').value = ''; $('ngay_bao').value = new Date().toISOString().split('T')[0];
     ISSUES.forEach(iss => {
       document.querySelector('input[name="'+iss.key+'"][value="khong"]').checked = true;
       $('det_'+iss.key).classList.remove('show');
