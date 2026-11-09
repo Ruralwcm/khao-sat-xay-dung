@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Khảo sát Vấn đề Xây dựng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --red:#d71920; --navy:#1a3c6e; --gold:#ffc107; --green:#1e8e4e;
+    --bg:#f4f6fb; --card:#fff; --line:#e5e9f2; --txt:#1c2434; --mut:#6b7280; }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif; background:var(--bg); color:var(--txt);
+    min-height:100vh; padding:10px; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px; margin:0 auto}
+  .head{background:linear-gradient(135deg,var(--navy),#2c4a8a); color:#fff; border-radius:14px;
+    padding:14px 16px; box-shadow:0 6px 18px rgba(26,60,110,.16); margin-bottom:10px}
+  .head h1{font-size:17px; font-weight:800; line-height:1.3}
+  .head p{font-size:11.5px; opacity:.85; margin-top:4px}
+  .card{background:var(--card); border-radius:12px; padding:14px; margin-top:10px;
+    box-shadow:0 1px 6px rgba(20,30,60,.04); border:1px solid var(--line)}
+  .card h2{font-size:14px; font-weight:700; color:var(--navy); margin-bottom:10px}
+  /* KPI rows */
+  .kpi-row{display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap}
+  .kpi{flex:1; min-width:130px; background:var(--card); border-radius:10px; padding:12px;
+    border:1px solid var(--line); text-align:center}
+  .kpi .val{font-size:28px; font-weight:800; line-height:1.1}
+  .kpi .lbl{font-size:11px; color:var(--mut); margin-top:2px; font-weight:600}
+  .kpi.green .val{color:var(--green)}
+  .kpi.red .val{color:var(--red)}
+  .kpi.navy .val{color:var(--navy)}
+  /* Progress bar */
+  .bar-wrap{height:10px; background:var(--line); border-radius:5px; margin:8px 0; overflow:hidden}
+  .bar-fill{height:100%; border-radius:5px; transition:width .5s}
+  /* Table */
+  table{width:100%; border-collapse:collapse; font-size:12.5px}
+  th{text-align:left; padding:8px 6px; font-weight:700; color:var(--navy); border-bottom:2px solid var(--navy);
+    font-size:11px; white-space:nowrap; position:sticky; top:0; background:var(--card); z-index:1}
+  td{padding:6px; border-bottom:1px solid var(--line); vertical-align:top}
+  tr:hover td{background:#f8faff}
+  .tag{display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700}
+  .tag.red{background:#ffebee; color:var(--red)}
+  .tag.green{background:#e8f5e9; color:var(--green)}
+  .tag.navy{background:#eef3fb; color:var(--navy)}
+  select{font-size:13px; font-family:inherit; padding:8px 10px; border:1.5px solid var(--line); border-radius:8px;
+    background:#fff; color:var(--txt); outline:none; min-width:120px}
+  select:focus{border-color:var(--navy)}
+  .filter-bar{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; align-items:center}
+  .filter-bar label{font-size:11px; font-weight:600; color:var(--mut); margin-right:4px}
+  .count{font-size:12px; color:var(--mut); margin-left:auto}
+  .issue-detail{font-size:12px; color:var(--mut); max-width:280px}
+  .clickable{cursor:pointer; color:var(--navy); font-weight:600}
+  .clickable:hover{text-decoration:underline}
+  .back-link{display:inline-block; font-size:12px; color:rgba(255,255,255,.8); text-decoration:none;
+    margin-top:6px; font-weight:600}
+  .back-link:hover{color:#fff}
+  .loading{text-align:center; padding:40px; color:var(--mut)}
+  .tabs{display:flex; gap:0; margin-bottom:0}
+  .tabs button{flex:1; padding:10px; border:1px solid var(--line); background:var(--card); font:inherit;
+    font-size:13px; font-weight:700; color:var(--mut); cursor:pointer; transition:.15s}
+  .tabs button:first-child{border-radius:10px 0 0 10px}
+  .tabs button:last-child{border-radius:0 10px 10px 0}
+  .tabs button.active{background:var(--navy); color:#fff; border-color:var(--navy)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  .scroll-tbl{max-height:500px; overflow-y:auto; border-radius:8px; border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>📊 Dashboard — Khảo sát Vấn đề Xây dựng</h1>
+    <p>Tiến độ khảo sát & diễn giải vấn đề đã khai báo</p>
+    <a class="back-link" href="index.html">← Quay lại form khảo sát</a>
+  </div>
+
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi navy"><div class="val" id="kpiTotal">—</div><div class="lbl">Tổng CH</div></div>
+    <div class="kpi green"><div class="val" id="kpiDone">—</div><div class="lbl">Đã khảo sát</div></div>
+    <div class="kpi red"><div class="val" id="kpiRemain">—</div><div class="lbl">Chưa khảo sát</div></div>
+    <div class="kpi"><div class="val" id="kpiRate">—</div><div class="lbl">Tỷ lệ</div></div>
+  </div>
+  <div class="card" style="padding:10px 14px">
+    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--mut); font-weight:600">
+      <span>Tiến độ</span><span id="progPct">0%</span>
+    </div>
+    <div class="bar-wrap"><div class="bar-fill" id="progBar" style="width:0%;background:var(--green)"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="filter-bar">
+      <select id="fMien" onchange="onFilter()"><option value="">Tất cả Miền</option></select>
+      <select id="fGdv" onchange="onFilterGdv()"><option value="">Tất cả GĐV</option></select>
+      <select id="fQlkv" onchange="renderTable()"><option value="">Tất cả QLKV</option></select>
+      <span class="count" id="rowCount"></span>
+    </div>
+
+    <div class="tabs">
+      <button class="active" onclick="switchTab('progress')">📋 Tiến độ</button>
+      <button onclick="switchTab('issues')">⚠️ Vấn đề</button>
+    </div>
+
+    <div class="tab-content active" id="tab-progress">
+      <div class="scroll-tbl"><table id="tblProgress"></table></div>
+    </div>
+    <div class="tab-content" id="tab-issues">
+      <div class="scroll-tbl"><table id="tblIssues"></table></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:var(--mut);font-size:11px;margin-top:16px">MsT ✨ — Rural Survey Dashboard</div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPmh_Erk9eDbpNCMQePscfl067merQamb1xfvKbtjyUmjw3jTUU4Z43LzziuQb7H1X/exec';
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let SURVEY = [], STORES = [], currentTab = 'progress';
+
+async function call(data) {
+  const r = await fetch(GAS_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+
+async function init() {
+  try {
+    const [sv, st] = await Promise.all([
+      call({action:'list', table:'xay_dung'}),
+      call({action:'getStores', region:''})
+    ]);
+    SURVEY = (sv.success && sv.rows) ? sv.rows : [];
+    STORES = (st.ok) ? st.stores : [];
+  } catch(e) { 
+    document.querySelector('.wrap').innerHTML = '<div class="loading">⚠️ Không kết nối được máy chủ</div>';
+    return; 
+  }
+  buildFilters();
+  renderKPIs();
+  renderTable();
+}
+
+function doneSaps() {
+  return new Set(SURVEY.map(r => r.ma_ch).filter(Boolean));
+}
+function issueRecords() {
+  return SURVEY.filter(r => r.van_de && r.van_de !== 'Không có vấn đề');
+}
+
+function buildFilters() {
+  const done = doneSaps();
+  // Build store map for fast lookup
+  const storeMap = {};
+  STORES.forEach(s => { storeMap[s.ma] = s; });
+
+  const miens = [...new Set(STORES.map(s => s.mien).filter(Boolean))].sort();
+  miens.forEach(m => {
+    const o = document.createElement('option'); o.value = m;
+    const total = STORES.filter(s => s.mien === m).length;
+    const d = STORES.filter(s => s.mien === m && done.has(s.ma)).length;
+    o.textContent = m + ' (' + d + '/' + total + ')';
+    $('fMien').appendChild(o);
+  });
+  renderGdv();
+}
+
+function renderGdv() {
+  const mien = $('fMien').value;
+  const done = doneSaps();
+  $('fGdv').innerHTML = '<option value="">Tất cả GĐV</option>';
+  $('fQlkv').innerHTML = '<option value="">Tất cả QLKV</option>';
+  let gdvs;
+  if (mien) gdvs = [...new Set(STORES.filter(s => s.mien === mien).map(s => s.gdv).filter(Boolean))].sort();
+  else gdvs = [...new Set(STORES.map(s => s.gdv).filter(Boolean))].sort();
+  gdvs.forEach(g => {
+    const o = document.createElement('option'); o.value = g;
+    const stores = STORES.filter(s => s.gdv === g && (!mien || s.mien === mien));
+    const total = stores.length;
+    const d = stores.filter(s => done.has(s.ma)).length;
+    o.textContent = g + ' (' + d + '/' + total + ')';
+    $('fGdv').appendChild(o);
+  });
+}
+
+function renderQlkv() {
+  const mien = $('fMien').value;
+  const gdv = $('fGdv').value;
+  const done = doneSaps();
+  $('fQlkv').innerHTML = '<option value="">Tất cả QLKV</option>';
+  const base = STORES.filter(s => (!mien || s.mien === mien) && (!gdv || s.gdv === gdv));
+  const qlkvs = [...new Set(base.map(s => s.qlkv).filter(Boolean))].sort();
+  qlkvs.forEach(q => {
+    const o = document.createElement('option'); o.value = q;
+    const stores = base.filter(s => s.qlkv === q);
+    const total = stores.length;
+    const d = stores.filter(s => done.has(s.ma)).length;
+    o.textContent = q + ' (' + d + '/' + total + ')';
+    $('fQlkv').appendChild(o);
+  });
+}
+
+function onFilter() { renderGdv(); renderQlkv(); renderKPIs(); renderTable(); }
+function onFilterGdv() { renderQlkv(); renderKPIs(); renderTable(); }
+
+function renderKPIs() {
+  const done = doneSaps();
+  const filtered = filterStores();
+  const total = filtered.length;
+  const d = filtered.filter(s => done.has(s.ma)).length;
+  const remain = total - d;
+  const rate = total > 0 ? Math.round(d/total*100) : 0;
+
+  $('kpiTotal').textContent = total;
+  $('kpiDone').textContent = d;
+  $('kpiRemain').textContent = remain;
+  $('kpiRate').textContent = rate + '%';
+  $('progPct').textContent = rate + '%';
+  $('progBar').style.width = rate + '%';
+}
+
+function filterStores() {
+  const mien = $('fMien').value, gdv = $('fGdv').value, qlkv = $('fQlkv').value;
+  return STORES.filter(s => 
+    (!mien || s.mien === mien) && (!gdv || s.gdv === gdv) && (!qlkv || s.qlkv === qlkv)
+  );
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  $('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  if (currentTab === 'progress') renderProgress();
+  else renderIssues();
+}
+
+function renderProgress() {
+  const done = doneSaps();
+  const filtered = filterStores();
+  const mien = $('fMien').value, gdv = $('fGdv').value, qlkv = $('fQlkv').value;
+
+  let html;
+  if (!mien && !gdv && !qlkv) {
+    // Group by Miền → GĐV
+    const miens = [...new Set(filtered.map(s => s.mien).filter(Boolean))].sort();
+    html = '<tr><th>Miền / GĐV</th><th>Tổng CH</th><th>Đã KS</th><th>Chưa KS</th><th>Tỷ lệ</th></tr>';
+    miens.forEach(m => {
+      const mStores = filtered.filter(s => s.mien === m);
+      const d = mStores.filter(s => done.has(s.ma)).length;
+      html += `<tr style="background:#eef3fb"><td style="font-weight:700;color:var(--navy)">📍 ${esc(m)}</td>
+        <td><b>${mStores.length}</b></td><td>${d}</td><td>${mStores.length-d}</td>
+        <td><span class="tag ${d===mStores.length?'green':d>0?'navy':'red'}">${Math.round(d/mStores.length*100)}%</span></td></tr>`;
+      // GĐV under this miền
+      const gdvs = [...new Set(mStores.map(s => s.gdv).filter(Boolean))].sort();
+      gdvs.forEach(g => {
+        const gStores = mStores.filter(s => s.gdv === g);
+        const gd = gStores.filter(s => done.has(s.ma)).length;
+        if (gStores.length === 0) return;
+        html += `<tr><td style="padding-left:16px">└ ${esc(g)}</td>
+          <td>${gStores.length}</td><td>${gd}</td><td>${gStores.length-gd}</td>
+          <td><span class="tag ${gd===gStores.length?'green':gd>0?'navy':'red'}">${Math.round(gd/gStores.length*100)}%</span></td></tr>`;
+      });
+    });
+  } else if (!gdv && !qlkv) {
+    // By GĐV
+    const gdvs = [...new Set(filtered.map(s => s.gdv).filter(Boolean))].sort();
+    html = '<tr><th>GĐV</th><th>Tổng CH</th><th>Đã KS</th><th>Chưa KS</th><th>Tỷ lệ</th></tr>';
+    gdvs.forEach(g => {
+      const gStores = filtered.filter(s => s.gdv === g);
+      const d = gStores.filter(s => done.has(s.ma)).length;
+      html += `<tr><td style="font-weight:600">${esc(g)}</td><td>${gStores.length}</td><td>${d}</td>
+        <td>${gStores.length-d}</td>
+        <td><span class="tag ${d===gStores.length?'green':d>0?'navy':'red'}">${Math.round(d/gStores.length*100)}%</span></td></tr>`;
+    });
+  } else {
+    // By QLKV or individual stores
+    html = '<tr><th>QLKV / CH</th><th>Tình trạng</th><th>Người báo</th><th>Ngày</th><th>Vấn đề</th></tr>';
+    // Group by QLKV
+    const qlkvs = [...new Set(filtered.map(s => s.qlkv).filter(Boolean))].sort();
+    qlkvs.forEach(q => {
+      const qStores = filtered.filter(s => s.qlkv === q);
+      const qd = qStores.filter(s => done.has(s.ma)).length;
+      html += `<tr style="background:#f8faff"><td style="font-weight:600" colspan="5">👤 ${esc(q)} — ${qd}/${qStores.length} CH · ${Math.round(qd/qStores.length*100)}%</td></tr>`;
+      // Stores under this QLKV
+      qStores.forEach(s => {
+        const hasDone = done.has(s.ma);
+        const sRecords = SURVEY.filter(r => r.ma_ch === s.ma);
+        const issues = sRecords.filter(r => r.van_de && r.van_de !== 'Không có vấn đề');
+        const lastRec = sRecords[sRecords.length-1] || {};
+        html += `<tr>
+          <td>${esc(s.ma)} — ${esc((s.ten||'').substring(0,30))}</td>
+          <td><span class="tag ${hasDone?'green':'red'}">${hasDone?'Đã KS':'Chưa KS'}</span></td>
+          <td>${esc(lastRec.nguoi_bao||'')}</td>
+          <td>${esc(lastRec.ngay_bao||'')}</td>
+          <td>${issues.map(i => '<span class="tag red">'+esc(i.van_de)+'</span>').join(' ') || (hasDone?'<span class="tag green">OK</span>':'')}</td>
+        </tr>`;
+      });
+    });
+  }
+  $('tblProgress').innerHTML = html;
+  $('rowCount').textContent = filtered.length + ' CH';
+}
+
+function renderIssues() {
+  const issues = issueRecords();
+  const mien = $('fMien').value, gdv = $('fGdv').value, qlkv = $('fQlkv').value;
+
+  // Find store info for each issue
+  const storeMap = {};
+  STORES.forEach(s => { storeMap[s.ma] = s; });
+
+  let filtered = issues;
+  if (mien || gdv || qlkv) {
+    filtered = issues.filter(r => {
+      const s = storeMap[r.ma_ch];
+      if (!s) return false;
+      return (!mien || s.mien === mien) && (!gdv || s.gdv === gdv) && (!qlkv || s.qlkv === qlkv);
+    });
+  }
+
+  let html = '<tr><th>Mã CH</th><th>Tên CH</th><th>Tỉnh</th><th>QLKV</th><th>Vấn đề</th><th>Diễn giải</th><th>Ngày hỏng</th><th>Người báo</th></tr>';
+  
+  if (filtered.length === 0) {
+    html += '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--mut)">✅ Không có vấn đề nào được báo cáo</td></tr>';
+  } else {
+    // Sort by date desc
+    filtered.sort((a,b) => (b.ngay_bao||'').localeCompare(a.ngay_bao||''));
+    filtered.forEach(r => {
+      const s = storeMap[r.ma_ch] || {};
+      html += `<tr>
+        <td><b>${esc(r.ma_ch)}</b></td>
+        <td>${esc((s.ten||r.ten_ch||'').substring(0,30))}</td>
+        <td>${esc(s.tinh||r.tinh||'')}</td>
+        <td>${esc(s.qlkv||'')}</td>
+        <td><span class="tag red">${esc(r.van_de)}</span></td>
+        <td class="issue-detail">${esc(r.dien_giai||'')}</td>
+        <td>${esc(r.tg_hong||'')}</td>
+        <td>${esc(r.nguoi_bao||'')}</td>
+      </tr>`;
+    });
+  }
+  $('tblIssues').innerHTML = html;
+  $('rowCount').textContent = filtered.length + ' vấn đề';
+}
+
+init();
+</script>
+</body>
+</html>
