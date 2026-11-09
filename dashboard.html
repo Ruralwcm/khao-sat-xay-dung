@@ -133,7 +133,7 @@ async function init() {
       call({action:'getStores', region:''})
     ]);
     SURVEY = (sv.success && sv.rows) ? sv.rows : [];
-    STORES = (st.ok) ? st.stores : [];
+    STORES = Array.isArray(st) ? st : (st.stores || []);
   } catch(e) { 
     document.querySelector('.wrap').innerHTML = '<div class="loading">⚠️ Không kết nối được máy chủ</div>';
     return; 
