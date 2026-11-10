@@ -36,6 +36,8 @@
 var DEFAULT_SHEET_ID = '1RtVPThy95QMdHGvfL_9lCMNwcgStXCxxqLj1Cpf-KwY';
 var STORELIST_SOURCE_ID = '1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A'; // storelist nguồn
 var STORE_SHEET_NAME = 'Store_list';
+var CTP_SHEET_ID = '1vBgt-ERAP6cNWVKUF8sa45Sw203BQywAE4CBU0c_6XA'; // Công tác phí Rural
+var CTP_USERS_TAB = '5-Users';
 
 /** Định dạng date/time VN (UTC+7): dd/mm/yyyy HH:MM */
 function nowVN() {
@@ -84,6 +86,9 @@ function doGet(e) {
   if (action === 'getGdvList') {
     return json(getGdvList());
   }
+  if (action === 'nhanSu' || action === 'getUsers') {
+    return json(getUsers());
+  }
   return json({ success: false, error: 'Unknown action: ' + action });
 }
 
@@ -107,6 +112,8 @@ function doPost(e) {
       case 'getSchedule':  return json(getSchedule(data));
       case 'getGdvList':   return json(getGdvList());
       case 'getStorelist': return json(getStorelist(body));
+      case 'nhanSu':
+      case 'getUsers':     return json(getUsers());
       default:       return json({ success: false, error: 'Unknown action: ' + action });
     }
   } catch (err) {
@@ -589,6 +596,39 @@ function json(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ============================================================
+ *  CTP — CÔNG TÁC PHÍ (đọc danh sách nhân sự)
+ * ============================================================ */
+
+/** Danh sách nhân sự từ sheet Công tác phí Rural, tab 5-Users */
+function getUsers() {
+  try {
+    var ss = SpreadsheetApp.openById(CTP_SHEET_ID);
+    var sheet = ss.getSheetByName(CTP_USERS_TAB);
+    if (!sheet) return { success: false, error: '5-Users tab not found' };
+
+    var rows = sheet.getDataRange().getValues();
+    if (rows.length <= 1) return { success: true, data: [] };
+
+    var out = [];
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r[0]) continue;
+      out.push({
+        maNV: String(r[0]).trim(),
+        ten: r[1] || '',
+        chucVu: r[2] || 'NV',
+        role: r[2] || 'NV',
+        gdv: r[3] || '',
+        ngayVao: r[4] || ''
+      });
+    }
+    return { success: true, data: out };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
 }
 
 /* ============================================================
