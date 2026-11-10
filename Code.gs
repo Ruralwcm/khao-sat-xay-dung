@@ -95,6 +95,7 @@ function doPost(e) {
 
   try {
     switch (action) {
+      case 'list':   return json(listRecordsMulti(table, body));
       case 'save':   return json(saveRecord(table, data));
       case 'upsert': return json(upsertRecord(table, body.key || tableKeyOf(table), data));
       case 'update': return json(updateRecord(table, body.id, data));
@@ -283,6 +284,13 @@ function updateRecord(table, id, data) {
 }
 
 /** Đọc toàn bộ records của một table */
+
+/** Wrapper cho POST — trả về { success, data, count } */
+function listRecordsMulti(table, body) {
+  var rows = listRecords(table, body || {});
+  return { success: true, data: rows, count: rows.length };
+}
+
 function listRecords(table, filter) {
   var sheet = getOrCreateSheet(tabNameOf(table));
   var headers = getHeaders(sheet);
