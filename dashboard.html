@@ -130,9 +130,9 @@ async function init() {
   try {
     const [sv, st] = await Promise.all([
       call({action:'list', table:'xay_dung'}),
-      call({action:'getStores', region:''})
+      fetch('storelist.json').then(r => r.json())
     ]);
-    SURVEY = (sv.success && sv.rows) ? sv.rows : [];
+    SURVEY = (sv.success && (sv.rows || sv.data)) ? (sv.rows || sv.data) : [];
     STORES = Array.isArray(st) ? st : (st.stores || []);
   } catch(e) { 
     document.querySelector('.wrap').innerHTML = '<div class="loading">⚠️ Không kết nối được máy chủ</div>';
