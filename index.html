@@ -162,6 +162,11 @@ function showToast(msg, isErr) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+async function callGet(params) {
+  const qs = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+  const r = await fetch(GAS_URL + '?' + qs);
+  return r.json();
+}
 async function call(data) {
   const r = await fetch(GAS_URL, {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -275,7 +280,7 @@ async function loadUnsurveyed() {
   if (!selectedStore || !selectedStore.qlkv) return;
   lastQlkv = selectedStore.qlkv;
   try {
-    const r = await call({action:'list', table:'xay_dung'});
+    const r = await callGet({action:'list', table:'xay_dung'});
     if (r.success && (r.rows || r.data)) {
       const list = r.rows || r.data || [];
       doneSaps = new Set(list.map(row => row.ma_ch).filter(Boolean));
