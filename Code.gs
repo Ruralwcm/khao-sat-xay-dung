@@ -1,63 +1,122 @@
-// GAS: Khảo sát Vấn đề Xây dựng
-// Deploy as Web App → lấy URL → paste vào index.html (GAS_URL)
-// Sheet: "Data Web App Rural" hoặc sheet riêng "Khao_sat_XD"
+/**
+ * GAS Backend — Khảo sát Vấn đề Xây dựng
+ * Sheet: Data Web App Rural (1RtVPThy95QMdHGvfL_9lCMNwcgStXCxxqLj1Cpf-KwY)
+ * Tab: xay_dung (tự tạo nếu chưa có)
+ *
+ * API:
+ *   GET  ?action=list              → trả về tất cả records
+ *   GET  ?action=data              → trả về records (định dạng khác)
+ *   POST {action:'save', data:{...}} → lưu 1 record
+ */
+
+var SHEET_ID = '1RtVPThy95QMdHGvfL_9lCMNwcgStXCxxqLj1Cpf-KwY';
+var TAB_NAME = 'xay_dung';
+
+function doGet(e) {
+  var p = e && e.parameter ? e.parameter : {};
+  var action = p.action || 'list';
+
+  if (action === 'list') {
+    var rows = readAll();
+    return json({ success: true, rows: rows, count: rows.length });
+  }
+  if (action === 'data') {
+    var rows2 = readAll();
+    return json({ success: true, data: rows2, count: rows2.length });
+  }
+  return json({ success: false, error: 'Unknown action: ' + action });
+}
 
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
-    return handleRequest(data);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ok:false, error: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+    var body = JSON.parse(e.postData ? e.postData.contents : '{}');
+  } catch(err) {
+    return json({ success: false, error: 'JSON parse error: ' + err });
   }
-}
 
-function doGet(e) {
-  const action = e.parameter.action;
-  if (action === 'getStores') {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName('Storeslist');
-    if (!sheet) return json({ok: false, error: 'Sheet Storeslist not found'});
-    const data = sheet.getDataRange().getValues();
-    const stores = [];
-    for (let i = 1; i < data.length; i++) {
-      stores.push({ma: String(data[i][0]), ten: String(data[i][1] || '')});
+  var action = body.action || 'save';
+
+  if (action === 'save') {
+    var data = body.data || {};
+    if (!data.ma_ch) return json({ success: false, error: 'Thiếu ma_ch (Mã CH)' });
+
+    var sheet = getOrCreateSheet();
+    var headers = getHeaders(sheet);
+
+    // Build row matching headers
+    var record = {};
+    record['id'] = Utilities.getUuid();
+    record['created_at'] = new Date().toISOString();
+    record['updated_at'] = record['created_at'];
+    for (var k in data) {
+      if (data.hasOwnProperty(k)) record[k] = data[k];
     }
-    return json({ok: true, stores});
+
+    // Ensure all headers exist
+    var allKeys = Object.keys(record);
+    for (var i = 0; i < allKeys.length; i++) {
+      if (headers.indexOf(allKeys[i]) < 0) {
+        headers.push(allKeys[i]);
+      }
+    }
+    // Write headers
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    // Build row
+    var row = [];
+    for (var c = 0; c < headers.length; c++) {
+      var val = record[headers[c]];
+      row.push(val !== undefined && val !== null ? val : '');
+    }
+    sheet.appendRow(row);
+
+    return json({ success: true, message: 'Đã lưu!', id: record['id'] });
   }
-  return json({ok: true, message: 'Khảo sát Xây dựng API'});
+
+  return json({ success: false, error: 'Unknown action: ' + action });
 }
 
-function handleRequest(data) {
-  const action = data.action;
-  if (action === 'saveXayDung') return saveSurvey(data);
-  return json({ok: false, error: 'Unknown action: ' + action});
-}
-
-function saveSurvey(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName('Khao_sat_XD');
+function getOrCreateSheet() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName(TAB_NAME);
   if (!sheet) {
-    sheet = ss.insertSheet('Khao_sat_XD');
-    sheet.appendRow(['Mã CH', 'Tên CH', 'Người báo cáo', 'Ngày báo cáo', 
-                      'Vấn đề', 'Diễn giải', 'Thời gian hỏng', 'Thời gian gửi']);
+    sheet = ss.insertSheet(TAB_NAME);
   }
+  return sheet;
+}
 
-  const ts = new Date().toISOString();
-  const issues = data.issues || [];
-  
-  if (issues.length === 0) {
-    // Ghi 1 dòng "không có vấn đề"
-    sheet.appendRow([data.ma_ch, data.ten_ch, data.nguoi_bao, data.ngay_bao,
-                     'Không có vấn đề', '', '', ts]);
-  } else {
-    issues.forEach(iss => {
-      sheet.appendRow([data.ma_ch, data.ten_ch, data.nguoi_bao, data.ngay_bao,
-                       iss.van_de, iss.dien_giai, iss.tg_hong, ts]);
-    });
+function getHeaders(sheet) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return ['id', 'created_at', 'updated_at'];
+  var row = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var headers = [];
+  for (var i = 0; i < row.length; i++) {
+    if (row[i] && String(row[i]).trim() !== '') headers.push(String(row[i]).trim());
   }
+  if (headers.length === 0) headers = ['id', 'created_at', 'updated_at'];
+  return headers;
+}
 
-  return json({ok: true, count: Math.max(1, issues.length)});
+function readAll() {
+  var sheet = getOrCreateSheet();
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+
+  var headers = getHeaders(sheet);
+  var lastCol = headers.length;
+  var range = sheet.getRange(2, 1, lastRow - 1, Math.max(1, lastCol));
+  var values = range.getValues();
+
+  var rows = [];
+  for (var i = 0; i < values.length; i++) {
+    var obj = {};
+    for (var c = 0; c < headers.length; c++) {
+      obj[headers[c]] = values[i][c];
+    }
+    // Skip empty rows
+    if (obj['ma_ch'] || obj['id']) rows.push(obj);
+  }
+  return rows;
 }
 
 function json(obj) {
