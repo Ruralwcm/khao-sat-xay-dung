@@ -68,6 +68,12 @@
     border:1px solid rgba(255,255,255,.3); border-radius:8px; padding:4px 10px; font:inherit;
     font-size:12px; font-weight:600; cursor:pointer; vertical-align:middle}
   .fs-btn:hover{background:rgba(255,255,255,.25)}
+  .ex-btn{background:var(--navy); color:#fff; border:none; border-radius:8px; padding:8px 14px;
+    font:inherit; font-size:12px; font-weight:600; cursor:pointer}
+  .ex-btn:hover{background:#2c4a8a}
+  .qlkv-rank{display:inline-block; width:24px; height:24px; border-radius:50%; text-align:center;
+    line-height:24px; font-size:11px; font-weight:800; color:#fff; margin-right:4px}
+  .rank-low{background:var(--red)} .rank-mid{background:#f4a238} .rank-high{background:var(--green)}
   @media(min-width:1024px){
     .wrap{max-width:1400px}
     body{padding:14px}
@@ -108,14 +114,23 @@
 
     <div class="tabs">
       <button class="active" onclick="switchTab('progress')">📋 Tiến độ</button>
+      <button onclick="switchTab('qlkv')">👤 QLKV</button>
       <button onclick="switchTab('issues')">⚠️ Vấn đề</button>
     </div>
 
     <div class="tab-content active" id="tab-progress">
       <div class="scroll-tbl"><table id="tblProgress"></table></div>
     </div>
+    <div class="tab-content" id="tab-qlkv">
+      <div class="scroll-tbl"><table id="tblQlkv"></table></div>
+    </div>
     <div class="tab-content" id="tab-issues">
       <div class="scroll-tbl"><table id="tblIssues"></table></div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+      <button class="ex-btn" onclick="exportDetail()">📥 Export chi tiết KS</button>
+      <button class="ex-btn" onclick="exportUnsure()">📋 Export CH chưa KS</button>
     </div>
   </div>
 
@@ -256,6 +271,7 @@ function switchTab(tab) {
 
 function renderTable() {
   if (currentTab === 'progress') renderProgress();
+  else if (currentTab === 'qlkv') renderQlkvTab();
   else renderIssues();
 }
 
@@ -366,6 +382,86 @@ function renderIssues() {
   }
   $('tblIssues').innerHTML = html;
   $('rowCount').textContent = filtered.length + ' vấn đề';
+}
+
+function renderQlkvTab() {
+  const done = doneSaps();
+  const filtered = filterStores();
+  const mien = $('fMien').value, gdv = $('fGdv').value;
+
+  // Group by QLKV
+  const qlkvMap = {};
+  filtered.forEach(s => {
+    const q = s.qlkv || 'N/A';
+    if (!qlkvMap[q]) qlkvMap[q] = { total: 0, done: 0, gdv: s.gdv || '', mien: s.mien || '' };
+    qlkvMap[q].total++;
+    if (done.has(s.ma)) qlkvMap[q].done++;
+  });
+
+  // Sort by completion rate ascending (worst first), top 20
+  const arr = Object.entries(qlkvMap).map(([k,v]) => ({ qlkv: k, ...v, rate: v.total > 0 ? Math.round(v.done/v.total*100) : 0 }));
+  arr.sort((a,b) => a.rate - b.rate);
+  const top20 = arr.slice(0, 20);
+
+  let html = '<tr><th>#</th><th>QLKV</th><th>GĐV</th><th>Miền</th><th>Tổng CH</th><th>Đã KS</th><th>Chưa KS</th><th>Tỷ lệ</th></tr>';
+  if (top20.length === 0) {
+    html += '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--mut)">Không có dữ liệu</td></tr>';
+  } else {
+    top20.forEach((r, i) => {
+      const cls = r.rate === 0 ? 'rank-low' : r.rate < 50 ? 'rank-mid' : 'rank-high';
+      html += `<tr>
+        <td><span class="qlkv-rank ${cls}">${i+1}</span></td>
+        <td><b>${esc(r.qlkv)}</b></td>
+        <td>${esc(r.gdv)}</td>
+        <td>${esc(r.mien)}</td>
+        <td>${r.total}</td><td>${r.done}</td><td>${r.total - r.done}</td>
+        <td><span class="tag ${r.rate===100?'green':r.rate>=50?'navy':'red'}">${r.rate}%</span></td>
+      </tr>`;
+    });
+  }
+  $('tblQlkv').innerHTML = html;
+  $('rowCount').textContent = top20.length + ' QLKV (top chưa hoàn thành)';
+}
+
+function exportDetail() {
+  const storeMap = {};
+  STORES.forEach(s => { storeMap[s.ma] = s; });
+  const mien = $('fMien').value, gdv = $('fGdv').value;
+  let rows = SURVEY;
+  if (mien || gdv) {
+    rows = SURVEY.filter(r => {
+      const s = storeMap[r.ma_ch];
+      if (!s) return false;
+      return (!mien || s.mien === mien) && (!gdv || s.gdv === gdv);
+    });
+  }
+  if (rows.length === 0) { alert('Không có dữ liệu để xuất!'); return; }
+  const hdrs = ['Mã CH','Tên CH','Tỉnh','QLKV','GĐV','Vấn đề','Diễn giải','TG hỏng','Ngày báo','Người báo'];
+  const csv = [hdrs.join(',')];
+  rows.forEach(r => {
+    const s = storeMap[r.ma_ch] || {};
+    csv.push([r.ma_ch||'',(s.ten||r.ten_ch||''),s.tinh||r.tinh||'',s.qlkv||'',s.gdv||'',
+             r.van_de||'',r.dien_giai||'',r.tg_hong||'',r.ngay_bao||'',r.nguoi_bao||''].map(v => '"'+esc(v)+'"').join(','));
+  });
+  download('Khao_sat_chi_tiet.csv', '\uFEFF' + csv.join('\n'));
+}
+
+function exportUnsure() {
+  const done = doneSaps();
+  const filtered = filterStores().filter(s => !done.has(s.ma));
+  if (filtered.length === 0) { alert('Tất cả CH đã được khảo sát!'); return; }
+  const hdrs = ['Mã CH','Tên CH','Tỉnh','Huyện','QLKV','GĐV','Miền','Ngày KT'];
+  const csv = [hdrs.join(',')];
+  filtered.forEach(s => {
+    csv.push([s.ma||'',s.ten||'',s.tinh||'',s.huyen||'',s.qlkv||'',s.gdv||'',s.mien||'',s.ngayKt||''].map(v => '"'+esc(v)+'"').join(','));
+  });
+  download('CH_Chua_Khao_Sat.csv', '\uFEFF' + csv.join('\n'));
+}
+
+function download(filename, text) {
+  const blob = new Blob([text], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = filename; a.click(); URL.revokeObjectURL(a.href);
 }
 
 function toggleFs() {
