@@ -118,7 +118,13 @@ const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 
 let SURVEY = [], STORES = [], currentTab = 'progress';
 
-async function call(data) {
+async function callGet(params) {
+  const qs = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+  const r = await fetch(GAS_URL + '?' + qs);
+  return r.json();
+}
+
+async function callPost(data) {
   const r = await fetch(GAS_URL, {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify(data)
@@ -129,7 +135,7 @@ async function call(data) {
 async function init() {
   try {
     const [sv, st] = await Promise.all([
-      call({action:'list', table:'xay_dung'}),
+      callGet({action:'list', table:'xay_dung'}),
       fetch('storelist.json').then(r => r.json())
     ]);
     SURVEY = (sv.success && (sv.rows || sv.data)) ? (sv.rows || sv.data) : [];
