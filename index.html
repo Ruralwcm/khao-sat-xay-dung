@@ -276,8 +276,9 @@ async function loadUnsurveyed() {
   lastQlkv = selectedStore.qlkv;
   try {
     const r = await call({action:'list', table:'xay_dung'});
-    if (r.success && r.rows) {
-      doneSaps = new Set(r.rows.map(row => row.ma_ch).filter(Boolean));
+    if (r.success && (r.rows || r.data)) {
+      const list = r.rows || r.data || [];
+      doneSaps = new Set(list.map(row => row.ma_ch).filter(Boolean));
     }
     showUnsurveyed();
   } catch(e) { doneSaps = new Set(); }
