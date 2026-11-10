@@ -64,6 +64,16 @@
   .tab-content{display:none}
   .tab-content.active{display:block}
   .scroll-tbl{max-height:500px; overflow-y:auto; border-radius:8px; border:1px solid var(--line)}
+  .fs-btn{display:inline-block; margin-left:10px; background:rgba(255,255,255,.15); color:#fff;
+    border:1px solid rgba(255,255,255,.3); border-radius:8px; padding:4px 10px; font:inherit;
+    font-size:12px; font-weight:600; cursor:pointer; vertical-align:middle}
+  .fs-btn:hover{background:rgba(255,255,255,.25)}
+  @media(min-width:1024px){
+    .wrap{max-width:1400px}
+    body{padding:14px}
+    table{font-size:13px}
+    th,td{padding:9px 8px}
+  }
 </style>
 </head>
 <body>
@@ -72,6 +82,7 @@
     <h1>📊 Dashboard — Khảo sát Vấn đề Xây dựng</h1>
     <p>Tiến độ khảo sát & diễn giải vấn đề đã khai báo</p>
     <a class="back-link" href="index.html">← Quay lại form khảo sát</a>
+    <button class="fs-btn" onclick="toggleFs()">⛶ Toàn màn hình</button>
   </div>
 
   <div class="kpi-row" id="kpiRow">
@@ -355,6 +366,14 @@ function renderIssues() {
   }
   $('tblIssues').innerHTML = html;
   $('rowCount').textContent = filtered.length + ' vấn đề';
+}
+
+function toggleFs() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
 }
 
 init();
