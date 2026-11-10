@@ -102,6 +102,15 @@ function doGet(e) {
 
 function doPost(e) {
   var body = parseBody(e);
+  // Nếu frontend gửi data={...} (URL-encoded), merge vào body
+  if (body && body.data && typeof body.data === 'string') {
+    try {
+      var parsed = JSON.parse(body.data);
+      if (parsed && typeof parsed === 'object') {
+        for (var k in parsed) { if (parsed.hasOwnProperty(k) && body[k] === undefined) body[k] = parsed[k]; }
+      }
+    } catch(err) { /* giữ nguyên */ }
+  }
   var action = body.action;
   var table  = body.table || body.tab || '';
   var data   = body.data || {};
@@ -651,30 +660,24 @@ function getCtpRecords(params) {
 }
 
 /** Gửi / cập nhật 1 CTP record */
-function ctpSubmit(data) {
-  if (!data) return { success: false, error: 'No data' };
-  // Parse data: frontend gửi data trong FormData
-  var rec;
-  if (typeof data === 'string') {
-    try { rec = JSON.parse(data); } catch(e) { return { success: false, error: 'Invalid data' }; }
-  } else {
-    rec = data;
+function ctpSubmit(body) {
+  var rec = body;
+  if (!rec.maNV && body.data) {
+    try { rec = typeof body.data === 'string' ? JSON.parse(body.data) : body.data; } catch(e) {}
   }
+  if (!rec || !rec.maNV) return { success: false, error: 'Missing maNV' };
 
   var sheet = getOrCreateSheet('CTP_Data');
   var headers = ensureHeaders(sheet, Object.keys(rec));
 
-  // Upsert: nếu đã có id thì update, không thì thêm mới
   if (rec.id) {
     var idCol = headers.indexOf('id');
     var lastRow = sheet.getLastRow();
-    if (lastRow > 1) {
+    if (lastRow > 1 && idCol >= 0) {
       var values = sheet.getRange(2, idCol + 1, lastRow - 1, 1).getValues();
       for (var i = 0; i < values.length; i++) {
         if (String(values[i][0]) === String(rec.id)) {
-          // Update existing
-          var now = nowVN();
-          rec['updated_at'] = now;
+          rec['updated_at'] = nowVN();
           for (var f = 0; f < headers.length; f++) {
             var hdr = headers[f];
             if (hdr === 'id' || hdr === 'created_at') continue;
@@ -687,7 +690,6 @@ function ctpSubmit(data) {
     }
   }
 
-  // New record
   rec['id'] = rec.id || Utilities.getUuid();
   rec['created_at'] = rec.created_at || nowVN();
   var row = [];
@@ -701,30 +703,22 @@ function ctpSubmit(data) {
 
 /** Phê duyệt CTP record */
 function ctpApprove(body) {
-  var id = body.id;
-  var approvedBy = body.approvedBy || '';
-  var newStatus = body.newStatus || 'done';
-  if (!id) return { success: false, error: 'Missing id' };
-
-  return updateRecord('ctp', id, {
-    trangThai: newStatus,
-    approvedBy: approvedBy,
+  if (!body.id) return { success: false, error: 'Missing id' };
+  return updateRecord('ctp', body.id, {
+    trangThai: body.newStatus || 'done',
+    approvedBy: body.approvedBy || '',
     approvedAt: nowVN()
   });
 }
 
 /** Từ chối CTP record */
 function ctpReject(body) {
-  var id = body.id;
-  var rejectedBy = body.rejectedBy || '';
-  var lyDo = body.lyDo || '';
-  if (!id) return { success: false, error: 'Missing id' };
-
-  return updateRecord('ctp', id, {
+  if (!body.id) return { success: false, error: 'Missing id' };
+  return updateRecord('ctp', body.id, {
     trangThai: 'tu_choi',
-    rejectedBy: rejectedBy,
+    rejectedBy: body.rejectedBy || '',
     rejectedAt: nowVN(),
-    lyDo: lyDo
+    lyDo: body.lyDo || ''
   });
 }
 
