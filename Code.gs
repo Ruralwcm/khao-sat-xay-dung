@@ -58,7 +58,8 @@ function nowVN() {
 var TABLES = {
   nha_thau:      { tab: 'NhaThau_Data',      required: ['hangMuc', 'tenCty'], key: null },
   thit_mdl:      { tab: 'ThitMDL_Data',      required: ['ma_ch'],             key: null },
-  lich_lam_viec: { tab: 'LichLamViec_Data',  required: ['ho_ten'],            key: null }
+  lich_lam_viec: { tab: 'LichLamViec_Data',  required: ['ho_ten'],            key: null },
+  ctp:           { tab: 'CTP_Data',           required: ['maNV', 'ten'],       key: 'id' }
 };
 
 /* ============================================================
@@ -89,6 +90,13 @@ function doGet(e) {
   if (action === 'nhanSu' || action === 'getUsers') {
     return json(getUsers());
   }
+  // === CTP actions ===
+  if (action === 'records') {
+    return json(getCtpRecords(p));
+  }
+  if (action === 'dinhMuc') {
+    return json(getDinhMuc());
+  }
   return json({ success: false, error: 'Unknown action: ' + action });
 }
 
@@ -114,6 +122,12 @@ function doPost(e) {
       case 'getStorelist': return json(getStorelist(body));
       case 'nhanSu':
       case 'getUsers':     return json(getUsers());
+      // === CTP actions ===
+      case 'submit':       return json(ctpSubmit(data));
+      case 'approve':      return json(ctpApprove(body));
+      case 'reject':       return json(ctpReject(body));
+      case 'records':      return json(getCtpRecords(body));
+      case 'dinhMuc':      return json(getDinhMuc());
       default:       return json({ success: false, error: 'Unknown action: ' + action });
     }
   } catch (err) {
@@ -599,7 +613,7 @@ function json(obj) {
 }
 
 /* ============================================================
- *  CTP — CÔNG TÁC PHÍ (đọc danh sách nhân sự)
+ *  CTP — CÔNG TÁC PHÍ
  * ============================================================ */
 
 /** Danh sách nhân sự từ sheet Công tác phí Rural, tab 5-Users */
@@ -629,6 +643,125 @@ function getUsers() {
   } catch (e) {
     return { success: false, error: e.toString() };
   }
+}
+
+/** Lấy danh sách CTP records (có filter) */
+function getCtpRecords(params) {
+  return listRecords('ctp', params);
+}
+
+/** Gửi / cập nhật 1 CTP record */
+function ctpSubmit(data) {
+  if (!data) return { success: false, error: 'No data' };
+  // Parse data: frontend gửi data trong FormData
+  var rec;
+  if (typeof data === 'string') {
+    try { rec = JSON.parse(data); } catch(e) { return { success: false, error: 'Invalid data' }; }
+  } else {
+    rec = data;
+  }
+
+  var sheet = getOrCreateSheet('CTP_Data');
+  var headers = ensureHeaders(sheet, Object.keys(rec));
+
+  // Upsert: nếu đã có id thì update, không thì thêm mới
+  if (rec.id) {
+    var idCol = headers.indexOf('id');
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      var values = sheet.getRange(2, idCol + 1, lastRow - 1, 1).getValues();
+      for (var i = 0; i < values.length; i++) {
+        if (String(values[i][0]) === String(rec.id)) {
+          // Update existing
+          var now = nowVN();
+          rec['updated_at'] = now;
+          for (var f = 0; f < headers.length; f++) {
+            var hdr = headers[f];
+            if (hdr === 'id' || hdr === 'created_at') continue;
+            var v = rec[hdr];
+            if (v !== undefined) sheet.getRange(i + 2, f + 1).setValue(v);
+          }
+          return { success: true, message: 'Updated', id: String(rec.id) };
+        }
+      }
+    }
+  }
+
+  // New record
+  rec['id'] = rec.id || Utilities.getUuid();
+  rec['created_at'] = rec.created_at || nowVN();
+  var row = [];
+  for (var c = 0; c < headers.length; c++) {
+    var val = rec[headers[c]];
+    row.push(val !== undefined ? val : '');
+  }
+  sheet.appendRow(row);
+  return { success: true, message: 'Submitted', id: String(rec.id) };
+}
+
+/** Phê duyệt CTP record */
+function ctpApprove(body) {
+  var id = body.id;
+  var approvedBy = body.approvedBy || '';
+  var newStatus = body.newStatus || 'done';
+  if (!id) return { success: false, error: 'Missing id' };
+
+  return updateRecord('ctp', id, {
+    trangThai: newStatus,
+    approvedBy: approvedBy,
+    approvedAt: nowVN()
+  });
+}
+
+/** Từ chối CTP record */
+function ctpReject(body) {
+  var id = body.id;
+  var rejectedBy = body.rejectedBy || '';
+  var lyDo = body.lyDo || '';
+  if (!id) return { success: false, error: 'Missing id' };
+
+  return updateRecord('ctp', id, {
+    trangThai: 'tu_choi',
+    rejectedBy: rejectedBy,
+    rejectedAt: nowVN(),
+    lyDo: lyDo
+  });
+}
+
+/** Định mức CTP theo vùng */
+var DEFAULT_DINH_MUC = [
+  {vung:'Miền núi phía Bắc',ctpNV:150000,ksNV:300000,ctpQL:200000,ksQL:400000,ctpHC:250000,ksHC:450000,ctpGDV:250000,ksGDV:500000,ctpGDM:300000,ksGDM:600000,note:'Hà Giang, Lào Cai, Điện Biên, Sơn La, Lai Châu, Cao Bằng, Bắc Kạn'},
+  {vung:'Đồng bằng Bắc Bộ',ctpNV:150000,ksNV:300000,ctpQL:200000,ksQL:400000,ctpHC:250000,ksHC:450000,ctpGDV:250000,ksGDV:500000,ctpGDM:300000,ksGDM:600000,note:'Bắc Ninh, Bắc Giang, Hải Dương, Hưng Yên, Hà Nam, Nam Định, Thái Bình, Ninh Bình, Vĩnh Phúc, Phú Thọ, Thái Nguyên, Hòa Bình'},
+  {vung:'Hà Nội',ctpNV:200000,ksNV:400000,ctpQL:250000,ksQL:500000,ctpHC:300000,ksHC:550000,ctpGDV:300000,ksGDV:600000,ctpGDM:350000,ksGDM:700000,note:'Nội thành + ngoại thành'},
+  {vung:'Hải Phòng / Quảng Ninh',ctpNV:180000,ksNV:350000,ctpQL:220000,ksQL:450000,ctpHC:270000,ksHC:500000,ctpGDV:270000,ksGDV:550000,ctpGDM:320000,ksGDM:650000,note:'Ven biển Đông Bắc'},
+  {vung:'Bắc Trung Bộ',ctpNV:150000,ksNV:300000,ctpQL:200000,ksQL:400000,ctpHC:250000,ksHC:450000,ctpGDV:250000,ksGDV:500000,ctpGDM:300000,ksGDM:600000,note:'Thanh Hóa, Nghệ An, Hà Tĩnh, Quảng Bình, Quảng Trị'},
+  {vung:'Trung Bộ',ctpNV:180000,ksNV:400000,ctpQL:230000,ksQL:500000,ctpHC:280000,ksHC:550000,ctpGDV:280000,ksGDV:600000,ctpGDM:350000,ksGDM:700000,note:'Huế, Đà Nẵng, Quảng Nam, Quảng Ngãi, Bình Định, Phú Yên, Khánh Hòa'},
+  {vung:'Tây Nguyên',ctpNV:180000,ksNV:350000,ctpQL:220000,ksQL:450000,ctpHC:270000,ksHC:500000,ctpGDV:270000,ksGDV:550000,ctpGDM:320000,ksGDM:650000,note:'Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng'},
+  {vung:'Đông Nam Bộ',ctpNV:200000,ksNV:450000,ctpQL:250000,ksQL:550000,ctpHC:300000,ksHC:600000,ctpGDV:300000,ksGDV:650000,ctpGDM:400000,ksGDM:800000,note:'TP HCM, Bình Dương, Đồng Nai, Bà Rịa-Vũng Tàu, Bình Phước, Tây Ninh'},
+  {vung:'Tây Nam Bộ',ctpNV:180000,ksNV:400000,ctpQL:220000,ksQL:500000,ctpHC:270000,ksHC:550000,ctpGDV:270000,ksGDV:600000,ctpGDM:350000,ksGDM:700000,note:'Long An, Tiền Giang, Bến Tre, Trà Vinh, Vĩnh Long, Đồng Tháp, Cần Thơ, Sóc Trăng, Bạc Liêu, Cà Mau, Kiên Giang'}
+];
+
+function getDinhMuc() {
+  try {
+    // Thử đọc từ sheet CTP trước
+    var ss = SpreadsheetApp.openById(CTP_SHEET_ID);
+    var sheet = ss.getSheetByName('DinhMuc');
+    if (sheet) {
+      var rows = sheet.getDataRange().getValues();
+      if (rows.length > 1) {
+        var headers = rows[0];
+        var out = [];
+        for (var i = 1; i < rows.length; i++) {
+          var obj = {};
+          for (var j = 0; j < headers.length; j++) obj[String(headers[j]).trim()] = rows[i][j];
+          out.push(obj);
+        }
+        if (out.length > 0) return { success: true, data: out, source: 'sheet' };
+      }
+    }
+  } catch(e) { /* fallback */ }
+  // Fallback: default
+  return { success: true, data: DEFAULT_DINH_MUC, source: 'default' };
 }
 
 /* ============================================================
