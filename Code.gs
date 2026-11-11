@@ -16,6 +16,7 @@
  *    POST {action:'delete', table, id}            → xóa theo id
  *    POST {action:'clear',  table}                → xóa sạch (giữ header)
  *    POST {action:'remove', table, key, value}    → xóa theo field bất kỳ
+ *    POST {action:'replace', table, key, value, rows} → ghi đè: xóa mọi dòng có key==value, ghi bộ rows mới (1 lần, có khóa)
  *
  *  → Schema động: không cần khai báo trước. GAS tự tạo tab + tự thêm
  *    cột (header) từ chính các field frontend gửi lên.
@@ -124,6 +125,7 @@ function doPost(e) {
       case 'delete': return json(deleteRecord(table, body.id));
       case 'remove': return json(removeWhere(table, body.key || tableKeyOf(table), body.value));
       case 'clear':  return json(clearTable(table));
+      case 'replace': return json(replaceRecords(table, body.key || tableKeyOf(table), body.value, body.rows));
       // === Lịch làm việc — action tương thích ngược ===
       case 'saveSchedule': return json(saveSchedule(data));
       case 'getSchedule':  return json(getSchedule(data));
@@ -239,15 +241,87 @@ function saveRecord(table, data) {
     if (data.hasOwnProperty(key)) record[key] = data[key];
   }
 
-  var headers = ensureHeaders(sheet, Object.keys(record));
-  var row = [];
-  for (var c = 0; c < headers.length; c++) {
-    var val = record[headers[c]];
-    row.push(val !== undefined ? val : '');
+  // Khóa để không chen vào giữa lúc replaceRecords đang ghi
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(25000); } catch (e) {
+    return { success: false, error: 'Hệ thống đang bận, thử lại sau ít giây' };
   }
-  sheet.appendRow(row);
+  try {
+    var headers = ensureHeaders(sheet, Object.keys(record));
+    var row = [];
+    for (var c = 0; c < headers.length; c++) {
+      var val = record[headers[c]];
+      row.push(val !== undefined ? val : '');
+    }
+    sheet.appendRow(row);
+  } finally {
+    lock.releaseLock();
+  }
 
   return { success: true, message: 'Đã lưu record', id: record['id'] };
+}
+
+/**
+ * Ghi đè theo key: ghi bộ rows mới rồi xóa mọi dòng cũ có <key> == value.
+ * Một lần gọi, có khóa → không ghi dở, không trùng. Cột key được ép kiểu văn bản
+ * để Sheet không tự đổi "5995" thành số hay "2DEC" thành ngày.
+ */
+function replaceRecords(table, key, value, rows) {
+  if (!key || value === undefined || value === null || value === '') {
+    return { success: false, error: 'Thiếu key/value' };
+  }
+  if (!rows || !rows.length) return { success: false, error: 'Thiếu rows' };
+  var keyText = String(value).trim();
+
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(25000); } catch (e) {
+    return { success: false, error: 'Hệ thống đang bận, thử lại sau ít giây' };
+  }
+  try {
+    var sheet = getOrCreateSheet(tabNameOf(table));
+    var fields = [key];
+    for (var r = 0; r < rows.length; r++) {
+      for (var f in rows[r]) {
+        if (rows[r].hasOwnProperty(f) && fields.indexOf(f) < 0) fields.push(f);
+      }
+    }
+    var headers = ensureHeaders(sheet, fields);
+    var keyCol = headers.indexOf(key);
+    var now = nowVN();
+
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      var line = [];
+      for (var c = 0; c < headers.length; c++) {
+        var h = headers[c], v;
+        if (h === 'id') v = Utilities.getUuid();
+        else if (h === 'created_at' || h === 'updated_at') v = now;
+        else if (h === key) v = keyText;
+        else v = rows[i][h];
+        line.push(v !== undefined && v !== null ? v : '');
+      }
+      out.push(line);
+    }
+
+    var start = sheet.getLastRow() + 1;
+    sheet.getRange(start, keyCol + 1, out.length, 1).setNumberFormat('@');
+    sheet.getRange(start, 1, out.length, headers.length).setValues(out);
+
+    var deleted = 0;
+    if (start > 2) {
+      var olds = sheet.getRange(2, keyCol + 1, start - 2, 1).getValues();
+      for (var k = olds.length - 1; k >= 0; k--) {
+        if (String(olds[k][0]).trim().toUpperCase() === keyText.toUpperCase()) {
+          sheet.deleteRow(k + 2);
+          deleted++;
+        }
+      }
+    }
+    SpreadsheetApp.flush();
+    return { success: true, message: 'Đã ghi ' + out.length + ' dòng', count: out.length, replaced: deleted };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /** Upsert: nếu tồn tại record có <key> == data[key] thì cập nhật, ngược lại thêm mới */

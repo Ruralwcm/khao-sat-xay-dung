@@ -144,6 +144,73 @@ const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 
 let SURVEY = [], STORES = [], currentTab = 'progress';
 
+// ─── Chuẩn hóa mã CH + lấy lần gửi mới nhất ───
+// Google Sheet tự đổi "5995" → số 5995 và "2DEC" → ngày, nên luôn so khớp qua normMa().
+const NONE = 'Không có vấn đề';
+const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+let STORE_SET = new Set();
+function normMa(v) {
+  const s = String(v == null ? '' : v).trim().toUpperCase();
+  if (STORE_SET.has(s)) return s;
+  if (/^\d{4}-\d\d-\d\dT/.test(s)) {
+    const d = new Date(new Date(s).getTime() + 7 * 3600 * 1000);
+    if (!isNaN(d)) {
+      const c = d.getUTCDate() + MON[d.getUTCMonth()];
+      if (STORE_SET.has(c)) return c;
+    }
+  }
+  return s;
+}
+// Mỗi CH chỉ giữ lần gửi mới nhất (dòng nằm sau trong Sheet = mới hơn).
+function latestRows(rows) {
+  const by = new Map();
+  rows.forEach(r => {
+    const m = normMa(r.ma_ch);
+    if (!m) return;
+    r.ma_ch = m;
+    if (!by.has(m)) by.set(m, []);
+    by.get(m).push(r);
+  });
+  const out = [];
+  by.forEach(list => {
+    const last = list[list.length - 1];
+    let keep = [];
+    if (last.submit_id) {
+      keep = list.filter(r => r.submit_id === last.submit_id);
+    } else {
+      // Dữ liệu cũ chưa có submit_id: lùi từ dòng cuối tới khi hạng mục lặp lại
+      const seen = new Set();
+      for (let i = list.length - 1; i >= 0; i--) {
+        const r = list[i], none = r.van_de === NONE;
+        if (r.submit_id || seen.has(r.van_de) || (none && keep.length)) break;
+        keep.unshift(r); seen.add(r.van_de);
+        if (none) break;
+      }
+    }
+    out.push(...keep);
+  });
+  return out;
+}
+function todayVN() {
+  return new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+// Sheet trả ngày dạng ISO (UTC) → hiển thị dd/mm/yyyy theo giờ VN
+function fmtDate(v) {
+  const s = String(v == null ? '' : v);
+  let m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(s);
+  if (m) return m[3] + '/' + m[2] + '/' + m[1];
+  if (/^\d{4}-\d\d-\d\dT/.test(s)) {
+    const d = new Date(new Date(s).getTime() + 7 * 3600 * 1000);
+    if (!isNaN(d)) return String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0') + '/' + d.getUTCFullYear();
+  }
+  return s;
+}
+function dateKey(v) {
+  const p = fmtDate(v).split('/');
+  return p.length === 3 ? p[2] + p[1] + p[0] : '';
+}
+
 async function callGet(params) {
   const qs = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
   const r = await fetch(GAS_URL + '?' + qs);
@@ -164,8 +231,9 @@ async function init() {
       callGet({action:'list', table:'xay_dung'}),
       fetch('storelist.json').then(r => r.json())
     ]);
-    SURVEY = (sv.success && (sv.rows || sv.data)) ? (sv.rows || sv.data) : [];
     STORES = Array.isArray(st) ? st : (st.stores || []);
+    STORE_SET = new Set(STORES.map(s => s.ma));
+    SURVEY = latestRows((sv.success && (sv.rows || sv.data)) ? (sv.rows || sv.data) : []);
   } catch(e) { 
     document.querySelector('.wrap').innerHTML = '<div class="loading">⚠️ Không kết nối được máy chủ</div>';
     return; 
@@ -179,7 +247,7 @@ function doneSaps() {
   return new Set(SURVEY.map(r => r.ma_ch).filter(Boolean));
 }
 function issueRecords() {
-  return SURVEY.filter(r => r.van_de && r.van_de !== 'Không có vấn đề');
+  return SURVEY.filter(r => r.van_de && r.van_de !== NONE);
 }
 
 function buildFilters() {
@@ -332,7 +400,7 @@ function renderProgress() {
           <td>${esc(s.ma)} — ${esc((s.ten||'').substring(0,30))}</td>
           <td><span class="tag ${hasDone?'green':'red'}">${hasDone?'Đã KS':'Chưa KS'}</span></td>
           <td>${esc(lastRec.nguoi_bao||'')}</td>
-          <td>${esc(lastRec.ngay_bao||'')}</td>
+          <td>${esc(fmtDate(lastRec.ngay_bao))}</td>
           <td>${issues.map(i => '<span class="tag red">'+esc(i.van_de)+'</span>').join(' ') || (hasDone?'<span class="tag green">OK</span>':'')}</td>
         </tr>`;
       });
@@ -365,7 +433,7 @@ function renderIssues() {
     html += '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--mut)">✅ Không có vấn đề nào được báo cáo</td></tr>';
   } else {
     // Sort by date desc
-    filtered.sort((a,b) => (b.ngay_bao||'').localeCompare(a.ngay_bao||''));
+    filtered.sort((a,b) => dateKey(b.ngay_bao).localeCompare(dateKey(a.ngay_bao)));
     filtered.forEach(r => {
       const s = storeMap[r.ma_ch] || {};
       html += `<tr>
@@ -375,7 +443,7 @@ function renderIssues() {
         <td>${esc(s.qlkv||'')}</td>
         <td><span class="tag red">${esc(r.van_de)}</span></td>
         <td class="issue-detail">${esc(r.dien_giai||'')}</td>
-        <td>${esc(r.tg_hong||'')}</td>
+        <td>${esc(fmtDate(r.tg_hong))}</td>
         <td>${esc(r.nguoi_bao||'')}</td>
       </tr>`;
     });
@@ -441,7 +509,7 @@ function exportDetail() {
   rows.forEach(r => {
     const s = storeMap[r.ma_ch] || {};
     csv.push([r.ma_ch||'',(s.ten||r.ten_ch||''),s.tinh||r.tinh||'',s.qlkv||'',s.gdv||'',
-             r.van_de||'',r.dien_giai||'',r.tg_hong||'',r.ngay_bao||'',r.nguoi_bao||''].map(v => '"'+esc(v)+'"').join(','));
+             r.van_de||'',r.dien_giai||'',fmtDate(r.tg_hong),fmtDate(r.ngay_bao),r.nguoi_bao||''].map(v => '"'+esc(v)+'"').join(','));
   });
   download('Khao_sat_chi_tiet.csv', '\uFEFF' + csv.join('\n'));
 }

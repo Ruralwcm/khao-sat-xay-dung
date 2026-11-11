@@ -149,6 +149,57 @@ const ISSUES = [
   {key:'wc', name:'Hỏng nhà vệ sinh', icon:'🚽'}
 ];
 
+// ─── Chuẩn hóa mã CH + lấy lần gửi mới nhất ───
+// Google Sheet tự đổi "5995" → số 5995 và "2DEC" → ngày, nên luôn so khớp qua normMa().
+const NONE = 'Không có vấn đề';
+const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+let STORE_SET = new Set();
+function normMa(v) {
+  const s = String(v == null ? '' : v).trim().toUpperCase();
+  if (STORE_SET.has(s)) return s;
+  if (/^\d{4}-\d\d-\d\dT/.test(s)) {
+    const d = new Date(new Date(s).getTime() + 7 * 3600 * 1000);
+    if (!isNaN(d)) {
+      const c = d.getUTCDate() + MON[d.getUTCMonth()];
+      if (STORE_SET.has(c)) return c;
+    }
+  }
+  return s;
+}
+// Mỗi CH chỉ giữ lần gửi mới nhất (dòng nằm sau trong Sheet = mới hơn).
+function latestRows(rows) {
+  const by = new Map();
+  rows.forEach(r => {
+    const m = normMa(r.ma_ch);
+    if (!m) return;
+    r.ma_ch = m;
+    if (!by.has(m)) by.set(m, []);
+    by.get(m).push(r);
+  });
+  const out = [];
+  by.forEach(list => {
+    const last = list[list.length - 1];
+    let keep = [];
+    if (last.submit_id) {
+      keep = list.filter(r => r.submit_id === last.submit_id);
+    } else {
+      // Dữ liệu cũ chưa có submit_id: lùi từ dòng cuối tới khi hạng mục lặp lại
+      const seen = new Set();
+      for (let i = list.length - 1; i >= 0; i--) {
+        const r = list[i], none = r.van_de === NONE;
+        if (r.submit_id || seen.has(r.van_de) || (none && keep.length)) break;
+        keep.unshift(r); seen.add(r.van_de);
+        if (none) break;
+      }
+    }
+    out.push(...keep);
+  });
+  return out;
+}
+function todayVN() {
+  return new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
 function toggleDetail(radio) {
   const sec = radio.closest('.sec');
   const detail = sec.querySelector('.detail');
@@ -177,7 +228,7 @@ async function call(data) {
 
 // ─── Init ───
 async function init() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayVN();
   // Render issues với toggle Hiện tại / Quá khứ
   let html = '';
   ISSUES.forEach(iss => {
@@ -202,6 +253,7 @@ async function init() {
   try {
     const resp = await fetch('storelist.json');
     STORES = await resp.json();
+    STORE_SET = new Set(STORES.map(s => s.ma));
     buildMien();
   } catch(e) {
     showToast('⚠️ Không tải được danh sách CH. F5 thử lại nhé.', true);
@@ -283,7 +335,7 @@ async function loadUnsurveyed() {
     const r = await callGet({action:'list', table:'xay_dung'});
     if (r.success && (r.rows || r.data)) {
       const list = r.rows || r.data || [];
-      doneSaps = new Set(list.map(row => row.ma_ch).filter(Boolean));
+      doneSaps = new Set(list.map(row => normMa(row.ma_ch)).filter(Boolean));
     }
     showUnsurveyed();
   } catch(e) { doneSaps = new Set(); }
@@ -317,7 +369,7 @@ function showUnsurveyed() {
 // ─── Submit ───
 $('btnSubmit').onclick = function() {
   if (!selectedStore) return;
-  const ngay = new Date().toISOString().split('T')[0];
+  const ngay = todayVN();
   let html = '<div class="row"><b>CH:</b> ' + esc(selectedStore.ma) + ' — ' + esc(selectedStore.ten) + '</div>';
   html += '<div class="row"><b>Ngày:</b> ' + ngay + '</div>';
   html += '<div style="margin-top:8px;font-size:13px"><b>Vấn đề:</b></div>';
@@ -348,7 +400,8 @@ async function doSubmit() {
   const btn = $('btnSubmit');
   btn.disabled = true; btn.textContent = '⏳ Đang gửi...';
 
-  const ngay = new Date().toISOString().split('T')[0];
+  const ngay = todayVN();
+  const submitId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const records = [];
   
   ISSUES.forEach(iss => {
@@ -359,7 +412,7 @@ async function doSubmit() {
         ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
         tinh: selectedStore.tinh, ngay_bao: ngay,
         van_de: iss.name, dien_giai: $('dg_'+iss.key).value.trim(),
-        tg_hong: tgVal
+        tg_hong: tgVal, submit_id: submitId
       });
     }
   });
@@ -367,16 +420,25 @@ async function doSubmit() {
     records.push({
       ma_ch: selectedStore.ma, ten_ch: selectedStore.ten,
       tinh: selectedStore.tinh, ngay_bao: ngay,
-      van_de: 'Không có vấn đề', dien_giai: '', tg_hong: ''
+      van_de: NONE, dien_giai: '', tg_hong: '', submit_id: submitId
     });
   }
 
-  let ok = 0, fail = 0;
-  for (const rec of records) {
-    try {
-      const r = await call({action:'save', table:'xay_dung', data:rec});
-      if (r.success) ok++; else fail++;
-    } catch(e) { fail++; }
+  // Ghi đè: 1 lần gọi, backend xóa bản cũ của CH rồi ghi cả bộ mới.
+  // Backend chưa có action 'replace' → gửi từng dòng; dashboard lấy lần gửi mới nhất theo submit_id.
+  let ok = 0, fail = 0, replaced = false;
+  try {
+    const r = await call({action:'replace', table:'xay_dung', key:'ma_ch', value:selectedStore.ma, rows:records});
+    if (r.success) { ok = records.length; replaced = true; }
+    else if (!/Unknown action/i.test(r.error || '')) { fail = records.length; replaced = true; }
+  } catch(e) { fail = records.length; replaced = true; }
+  if (!replaced) {
+    for (const rec of records) {
+      try {
+        const r = await call({action:'save', table:'xay_dung', data:rec});
+        if (r.success) ok++; else fail++;
+      } catch(e) { fail++; }
+    }
   }
 
   if (fail === 0) {
@@ -392,7 +454,8 @@ async function doSubmit() {
     });
     updateBtn();
   } else {
-    showToast('⚠️ Gửi ' + ok + '/' + records.length + '. ' + fail + ' lỗi.', true);
+    showToast('⚠️ Mới gửi được ' + ok + '/' + records.length + '. Bấm Gửi lại nhé, bản mới sẽ thay bản cũ.', true);
+    updateBtn();
   }
   btn.textContent = '📤 Gửi kết quả';
 }
