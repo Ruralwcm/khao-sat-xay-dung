@@ -80,6 +80,7 @@
   .dash-link{display:inline; font-size:11px; color:var(--mut); 
     font-weight:500; text-decoration:none}
 </style>
+<script src="store-source.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -251,8 +252,15 @@ async function init() {
 
   // Load stores from static JSON (reliable, no GAS dependency)
   try {
-    const resp = await fetch('storelist.json');
-    STORES = await resp.json();
+    try {
+      STORES = await STORE_SOURCE.live(r => ({ma:r.ma_sap,ten:r.ten_ch,mien:r.mien,tinh:r.tinh,huyen:r.huyen,
+        qlkv:r.qlkv,gdv:r.gdv,ngayKt:r.khai_truong?r.khai_truong.slice(8,10)+'/'+r.khai_truong.slice(5,7)+'/'+r.khai_truong.slice(0,4):'',
+        diaChi:r.dia_chi||[r.huyen,r.tinh].filter(Boolean).join(', ')}));
+    } catch (err) {
+      console.warn('API_Stores loi, dung file tinh:', err);
+      const resp = await fetch('storelist.json');
+      STORES = await resp.json();
+    }
     STORE_SET = new Set(STORES.map(s => s.ma));
     buildMien();
   } catch(e) {
